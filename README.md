@@ -24,7 +24,8 @@ ubuntu apt packages to install:
 - opensc [pkcs11-tool, opensc-tool, sc-hsm-tool]  
 
 list algorithms implemented  
-```$ opensc-tool --list-algorithms```  
+
+    $ opensc-tool --list-algorithms
 
 locate opensc-pkcs11.so
 
@@ -32,7 +33,8 @@ locate opensc-pkcs11.so
     opensc-pkcs11: /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so  
 
 initialize HSM, irreversibly setting SO-PIN (write SO-PIN to write-once PROM)  
-```pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --init-token --init-pin --so-pin=0000000000000000 --new-pin=xxx --label="test" --pin=xxx```  
+    
+    pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --init-token --init-pin --so-pin=0000000000000000 --new-pin=xxx --label="test" --pin=xxx```  
 
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --login-type so --so-pin yyy --change-pin --new-pin xxx  
 
@@ -59,6 +61,47 @@ pkcs11-tool --login --login-type so --so-pin=xxx --init-pin --new-pin=yyy
 
 generate BTC key pair (using NIST curve secp256k1, https://neuromancer.sk/std/secg/secp256k1)
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:secp256k1 --label btc-test
+
+re-initialize HSM, specifying single DKEK  
+```sc-hsm-tool --initialize --so-pin XXX --pin YYY --dkek-shares 1```
+
+generate single password-encrypted pbe DEK share file  
+
+    $ sc-hsm-tool --create-dkek-share alpeh-dkek-share.pbe
+
+    Using reader with a card: Nitrokey Nitrokey HSM (DENK00000000000         ) 00 00
+
+    The DKEK share will be enciphered using a key derived from a user supplied password.
+    The security of the DKEK share relies on a well chosen and sufficiently long password.
+    The recommended length is more than 10 characters, which are mixed letters, numbers and
+    symbols.
+
+    Please keep the generated DKEK share file in a safe location. We also recommend to keep a
+    paper printout, in case the electronic version becomes unavailable. A printable version
+    of the file can be generated using "openssl base64 -in <filename>".
+    Enter password to encrypt DKEK share : 
+
+    Please retype password to confirm : 
+
+    Enciphering DKEK share, please wait...
+    DKEK share created and saved to alpeh-dkek-share.pbe
+
+
+produce hex dump to print to paper  
+```hexdump -x alpeh-dkek-share.pbe```
+
+import DKEK  
+
+    $ sc-hsm-tool --import-dkek-share alpeh-dkek-share.pbe
+
+    Using reader with a card: Nitrokey Nitrokey HSM (DENK00000000000         ) 00 00
+    Enter password to decrypt DKEK share : 
+
+    Deciphering DKEK share, please wait...
+    DKEK share imported
+    DKEK shares          : 1
+    DKEK key check value : 1234567890123456
+
 
 
 ## specifications & performance
