@@ -131,6 +131,8 @@ DKEK.deriveDKEKShareKey = function(salt, password) {
 		d.clear();
 		d = nd;
 
+		// d = password || salt 
+
 		try	{
 			// Try the fast hash available in scdp4j 3.8
 			var h = crypto.digest(Crypto.MD5, d, 10000000);
@@ -144,6 +146,7 @@ DKEK.deriveDKEKShareKey = function(salt, password) {
 			}
 		}
 		keyivbuff.append(d);
+		// keyivbuf = MD5(password || salt, 10000000)
 	}
 
 	var keyiv = keyivbuff.toByteString();

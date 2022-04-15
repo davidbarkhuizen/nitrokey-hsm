@@ -126,3 +126,4 @@ RS|2048|38
 AES256
 password-based-encryption (PBE)
 
+pip3 install -r requirements.txt 

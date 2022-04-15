@@ -2,6 +2,8 @@ import logging
 from binascii import hexlify, unhexlify
 import hashlib
 
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
 def hex(b):
     return hexlify(b).upper()
 
@@ -58,9 +60,13 @@ def derive_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000
         nd = d + salt
         d = nd
 
-        m = hashlib.md5(hash_iterations)
-        m.update(d)
-        hashed = m.digest()
+        to_hash = d
+        hashed = None
+        for i in range(hash_iterations):
+            m = hashlib.md5()
+            m.update(to_hash)
+            hashed = m.digest()
+            to_hash = hashed
 
         key_iv = key_iv + hashed
 
@@ -122,22 +128,28 @@ def decrypt_DEK(share:bytes, password: bytes):
     salt = share[8:16]
     logging.info(f'salt: {hex(salt)}')
 
-    hash_iterations=10000000
+    ciphertext = share[16:]
+    logging.info(f'ciphertext: (L {len(ciphertext)}) {ciphertext}')
 
-    from hashlib import pbkdf2_hmac
-    dk = pbkdf2_hmac('md5', password, salt, hash_iterations, 32)
+    key_iv = derive_encryption_key(salt, password)
 
-    print(hex(dk))
+    logging.info(f'key_iv [l={len(key_iv)}]: {hexlify(key_iv)}')
 
-    # key_iv = derive_encryption_key(salt, password)
-
-    # logging.info(f'key_iv [l={len(key_iv)}]: {hexlify(key_iv)}')
-
-    # key = key_iv[0:32]
-    # iv = key_iv[32:]
+    key = key_iv[0:32]
+    iv = key_iv[32:]
     
-    # logging.info(f'key: {hexlify(key)}')
-    # logging.info(f'iv: {hexlify(iv)}')
+    logging.info(f'key: {hexlify(key)}')
+    logging.info(f'iv: {hexlify(iv)}')
+
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    #encryptor = cipher.encryptor()
+    #ct = encryptor.update(b"a secret message") + encryptor.finalize()
+    decryptor = cipher.decryptor()
+    plain1 = decryptor.update(ciphertext)
+    plain2 = decryptor.finalize()
+
+    logging.info(f'plain: {hexlify(plain1)}')
+    logging.info(f'plain: {hexlify(plain2)}')
 
 
 # 	var k = new Key();
