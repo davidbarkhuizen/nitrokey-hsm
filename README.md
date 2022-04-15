@@ -18,6 +18,10 @@ pkcs11-tool
 https://helpmanual.io/help/pkcs11-tool/  
 
 
+python-pkcs11
+Using with SmartCard-HSM (Nitrokey HSM)  
+https://python-pkcs11.readthedocs.io/en/latest/opensc.html  
+
 ### install
 
 ubuntu apt packages to install:  
@@ -40,7 +44,6 @@ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --login-
 
 pkcs11-tool --login --login-type so --show-info
 
-
 query HSM status (dump all card objects)  
 ```pkcs15-tool -D```
 
@@ -49,7 +52,6 @@ generate ec key
 
 change so-pin, using so-pin
 ```pkcs11-tool --module /usr/local/lib/opensc-pkcs11.so --login --login-type so --so-pin 3537363231383830 --change-pin --new-pin 0123456789012345```
-
 
 change user-pin, using so-pin
 ```pkcs11-tool --login --login-type so --so-pin=3537363231383830 --init-pin --new-pin=648219```
@@ -88,7 +90,9 @@ generate single password-encrypted pbe DEK share file
 
 
 produce hex dump to print to paper  
-```hexdump -x alpeh-dkek-share.pbe```
+
+    $ hexdump -x alpeh-dkek-share.pbe
+    $ openssl base64 -in alpeh-dkek-share.pbe
 
 import DKEK  
 
@@ -101,8 +105,6 @@ import DKEK
     DKEK share imported
     DKEK shares          : 1
     DKEK key check value : 1234567890123456
-
-
 
 ## specifications & performance
 
@@ -118,3 +120,9 @@ ECC|256|300
 AES|256|300  
 RSA|4096|19  
 RS|2048|38  
+
+### DKEK
+
+AES256
+password-based-encryption (PBE)
+
