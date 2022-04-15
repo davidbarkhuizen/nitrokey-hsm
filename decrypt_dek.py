@@ -7,42 +7,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 def hex(b):
     return hexlify(b).upper()
 
-def blankDKEK():
-    return unhexlify('0000000000000000000000000000000000000000000000000000000000000000')
-
-# # Return the Key Check Value (KCV) of the internal DKEK
-# # @type ByteString
-# # @return the KCV
-# DKEK.prototype.getKCV = function() {
-# 	return this.crypto.digest(Crypto.SHA_256, this.dkek).left(8);
-# }
-
-# # Derive the encryption key from the DKEK
-# # @type ByteString
-# # * @return the encryption key
-# DKEK.prototype.getKENC = function() {
-# 	var kencval = this.crypto.digest(Crypto.SHA_256, this.dkek.concat(new ByteString("00000001", HEX)));
-# 	var kenc = new Key();
-# 	kenc.setComponent(Key.AES, kencval);
-# 	return kenc;
-# }
-
-
-
-# /**
-#  * Derive the message authentication key from the DKEK
-#  *
-#  * @type ByteString
-#  * @return the message authentication key
-#  */
-# DKEK.prototype.getKMAC = function() {
-# 	var kmacval = this.crypto.digest(Crypto.SHA_256, this.dkek.concat(new ByteString("00000002", HEX)));
-# 	var kmac = new Key();
-# 	kmac.setComponent(Key.AES, kmacval);
-# 	return kmac;
-# }
-
-
 def derive_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
     
@@ -74,50 +38,6 @@ def derive_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000
     
     return key_iv
 
-# /**
-#  * Encrypt a DKEK share
-#  *
-#  * @param {ByteString} keyshare the key share
-#  * @param {ByteString} password the password
-#  * @type ByteString
-#  * @return Encrypted DKEK share value
-#  */
-# DKEK.encryptKeyShare = function(keyshare, password) {
-# 	assert(keyshare instanceof ByteString, "Argument keyshare must be ByteString");
-# 	assert(keyshare.length == 32, "Argument keyshare must be 32 bytes");
-# 	assert(password instanceof ByteString, "Argument password must be ByteString");
-
-# 	var crypto = new Crypto();
-# 	var salt = crypto.generateRandom(8);
-
-# 	var keyiv = DKEK.deriveDKEKShareKey(salt, password);
-
-# 	var k = new Key();
-# 	k.setComponent(Key.AES, keyiv.bytes(0, 32));
-# 	var iv = keyiv.bytes(32, 16);
-# 	keyiv.clear();
-
-# 	var plain = keyshare.concat(new ByteString("10101010101010101010101010101010", HEX));
-# 	var cipher = crypto.encrypt(k, Crypto.AES_CBC, plain, iv);
-# 	plain.clear();
-# 	k.getComponent(Key.AES).clear();
-
-# 	var blob = (new ByteString("Salted__", ASCII)).concat(salt).concat(cipher);
-# 	return blob;
-# }
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-# DKEK.testDKEK = function() {
-# 	var crypto = new Crypto();
-# 	var dkek = crypto.generateRandom(32);
-# 	var password = new ByteString("Password", ASCII);
-# 	var enc = DKEK.encryptKeyShare(dkek, password);
-# 	print(enc);
-# 	var plain = DKEK.decryptKeyShare(enc, password);
-# 	assert(dkek.equals(plain), "Reference does not match");
-# }
-
 def decrypt_DEK(share:bytes, password: bytes):
 
     assert len(share) == 64
@@ -129,7 +49,7 @@ def decrypt_DEK(share:bytes, password: bytes):
     logging.info(f'salt: {hex(salt)}')
 
     ciphertext = share[16:]
-    logging.info(f'ciphertext: (L {len(ciphertext)}) {ciphertext}')
+    logging.info(f'ciphertext: (L {len(ciphertext)}) {hex(ciphertext)}')
 
     key_iv = derive_encryption_key(salt, password)
 
@@ -138,37 +58,25 @@ def decrypt_DEK(share:bytes, password: bytes):
     key = key_iv[0:32]
     iv = key_iv[32:]
     
-    logging.info(f'key: {hexlify(key)}')
-    logging.info(f'iv: {hexlify(iv)}')
+    logging.info(f'key: {hex(key)}')
+    logging.info(f'iv: {hex(iv)}')
 
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-    #encryptor = cipher.encryptor()
-    #ct = encryptor.update(b"a secret message") + encryptor.finalize()
     decryptor = cipher.decryptor()
-    plain1 = decryptor.update(ciphertext)
-    plain2 = decryptor.finalize()
+    plain_text = decryptor.update(ciphertext)
+    decryptor.finalize()
+    
+    expected_padding = unhexlify('10101010101010101010101010101010')
+    assert plain_text.endswith(expected_padding)
 
-    logging.info(f'plain: {hexlify(plain1)}')
-    logging.info(f'plain: {hexlify(plain2)}')
+    dkek = plain_text[:32]
+    logging.info(f'recovered DKEK: {hex(dkek)}')
 
-
-# 	var k = new Key();
-# 	k.setComponent(Key.AES, keyiv.bytes(0, 32));
-# 	var iv = keyiv.bytes(32, 16);
-# 	keyiv.clear();
-
-# 	var plain = crypto.decrypt(k, Crypto.AES_CBC, keyshare.bytes(16), iv);
-# 	k.getComponent(Key.AES).clear();
-
-# 	if (!(new ByteString("10101010101010101010101010101010", HEX)).equals(plain.right(16))) {
-# 		throw new GPError(module.id, GPError.INVALID_DATA, 0, "Decryption of DKEK failed. Wrong password ?");
-# 	}
-
-# 	var val = plain.left(32);
-# 	plain.clear();
-
-# 	return val;
-# }
+    dkek_key_cipher = Cipher(algorithms.AES(dkek), modes.CBC(bytes([0x00]*16)))
+    dkek_encryptor = dkek_key_cipher.encryptor()
+    recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16))
+    dkek_encryptor.finalize()
+    logging.info(f'KCV for recovered key: {hex(recovered_kcv[0:3])}')
 
 
 def load_local_share_file(path: str):
@@ -182,5 +90,5 @@ logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 
 password = 'passwordpassword'.encode('ascii')
-share = load_local_share_file('sample.pbe.share')
+share = load_local_share_file('single-component-test-share.pbe.test')
 dek = decrypt_DEK(share, password)
