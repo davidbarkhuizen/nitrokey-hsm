@@ -1,0 +1,32 @@
+dkek-test.pbe
+
+U2FsdGVkX19svhSIBSqUH/GixQX4+9KdFKpErNW7MLzNCX9YBE7+eseQB6Vh7Jga
+FmhlWzIcqCgB39n9xXe6BA==
+
+0000000    6153    746c    6465    5f5f    be6c    8814    2a05    1f94
+0000010    a2f1    05c5    fbf8    9dd2    aa14    ac44    bbd5    bc30
+0000020    09cd    587f    4e04    7afe    90c7    a507    ec61    1a98
+0000030    6816    5b65    1c32    28a8    df01    fdd9    77c5    04ba
+0000040
+
+INFO:root:loading DKEK file share @ dkek-test.pbe
+INFO:root:salt: b'6CBE1488052A941F'
+INFO:root:ciphertext: (L 48) b'F1A2C505F8FBD29D14AA44ACD5BB30BCCD097F58044EFE7AC79007A561EC981A1668655B321CA82801DFD9FDC577BA04'
+INFO:root:deriving DKEK share encryption key (step 1 of 3)...
+INFO:root:deriving DKEK share encryption key (step 2 of 3)...
+INFO:root:deriving DKEK share encryption key (step 3 of 3)...
+INFO:root:key_iv [l=48]: b'4037194df2f11b0d0cf5f2bc95acf75316d1edb2daf26ef9224c30afdffac59f67e6449f70f8af424408ead85e3a4a36'
+INFO:root:key: b'4037194DF2F11B0D0CF5F2BC95ACF75316D1EDB2DAF26EF9224C30AFDFFAC59F'
+INFO:root:iv: b'67E6449F70F8AF424408EAD85E3A4A36'
+INFO:root:recovered DKEK: b'C955AF6FB058CA963D270049DE57B75B175D528B8993D7651DCC4650097CAFFB'
+INFO:root:KCV for recovered key: b'8C413C'
+
+
+Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
+Enter password to decrypt DKEK share : 
+
+Deciphering DKEK share, please wait...
+DKEK share imported
+DKEK shares          : 1
+DKEK key check value : 2AFA121E8764A1E3
+

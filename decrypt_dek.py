@@ -46,20 +46,20 @@ def decrypt_DEK(share:bytes, password: bytes):
     assert share_prefix.decode('ASCII') == 'Salted__'
 
     salt = share[8:16]
-    logging.info(f'salt: {hex(salt)}')
+    logging.info(f'salt (L={len(salt)}): {hex(salt)}')
 
     ciphertext = share[16:]
-    logging.info(f'ciphertext: (L {len(ciphertext)}) {hex(ciphertext)}')
+    logging.info(f'ciphertext (L={len(ciphertext)}): {hex(ciphertext)}')
 
     key_iv = derive_encryption_key(salt, password)
 
-    logging.info(f'key_iv [l={len(key_iv)}]: {hexlify(key_iv)}')
+    logging.info(f'key_iv [L={len(key_iv)}]: {hexlify(key_iv)}')
 
     key = key_iv[0:32]
     iv = key_iv[32:]
     
-    logging.info(f'key: {hex(key)}')
-    logging.info(f'iv: {hex(iv)}')
+    logging.info(f'key [L={len(key)}]: {hex(key)}')
+    logging.info(f'iv: [L={len(iv)}]: {hex(iv)}')
 
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
@@ -69,14 +69,27 @@ def decrypt_DEK(share:bytes, password: bytes):
     expected_padding = unhexlify('10101010101010101010101010101010')
     assert plain_text.endswith(expected_padding)
 
-    dkek = plain_text[:32]
-    logging.info(f'recovered DKEK: {hex(dkek)}')
+    share = plain_text[:32]
+    logging.info(f'recovered share: {hex(share)}')
 
-    dkek_key_cipher = Cipher(algorithms.AES(dkek), modes.CBC(bytes([0x00]*16)))
+    dkek = bytes(a ^ b for a, b in zip(share, bytes([0x00]*32)))
+    logging.info(f'recovered dkek: {hex(dkek)}')
+
+    # NitroKey HSM key-check-value logic
+    #
+    kcv_msg = hashlib.sha256()
+    kcv_msg.update(dkek)
+    kcv = kcv_msg.digest()[:8]
+    logging.info(f'DKEK KCV: {hex(kcv)}')
+
+    return
+
+    aes_key = dkek
+    dkek_key_cipher = Cipher(algorithms.AES(aes_key), modes.CBC(bytes([0x00]*16)))
     dkek_encryptor = dkek_key_cipher.encryptor()
-    recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16))
+    recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
     dkek_encryptor.finalize()
-    logging.info(f'KCV for recovered key: {hex(recovered_kcv[0:3])}')
+    logging.info(f'KCV for recovered key: {hex(recovered_kcv)}')
 
 
 def load_local_share_file(path: str):
@@ -90,5 +103,7 @@ logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 
 password = 'passwordpassword'.encode('ascii')
-share = load_local_share_file('single-component-test-share.pbe.test')
+pbe_file_path = 'dkek-test.pbe'
+
+share = load_local_share_file(pbe_file_path)
 dek = decrypt_DEK(share, password)
