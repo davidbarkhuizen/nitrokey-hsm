@@ -85,10 +85,18 @@ generate single password-encrypted pbe DEK share file
 convert binary to text to print to paper  
 
     # hex (base 16)  
-    $ hexdump -x dkek-test.pbe > dkek-test.pbe.hex  
-    
+    $ hexdump -ve '16/1 "%02x " "\n"' dkek-test.pbe > dkek-test.pbe.hex  
+
     # base64  
     $ openssl base64 -in dkek-test.pbe > dkek-test.pbe.b64  
+
+convert dump back to binary
+
+    # hexdump
+    xxd -r -p dkek-test.pbe.hex dkek-test.pbe  
+
+    # b64
+    b64 -d dkek-test.pbe.64 dkek-test.pbe
 
 ##### Import
 

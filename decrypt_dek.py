@@ -4,10 +4,30 @@ import hashlib
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+dkek_share_file_header = 'Salted__'.encode('ascii')
+dkek_share_padding = unhexlify('10101010101010101010101010101010')
+
+def blank_dkek():
+    return bytes([0x00]*32)
+
+def mix_key_share_into_dkek(dkek, share):    
+    return bytes(a ^ b for a, b in zip(dkek, share))
+
+def dkek_kcv(dkek):
+    kcv_msg = hashlib.sha256()
+    kcv_msg.update(dkek)
+    return kcv_msg.digest()[:8]
+
 def hex(b):
     return hexlify(b).upper()
 
-def derive_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
+def load_binary_file(path: str):
+    binary_data = None
+    with open(path, mode='rb') as file:
+        binary_data = file.read()
+    return binary_data
+
+def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
     
     d = bytes(0)
@@ -38,20 +58,20 @@ def derive_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000
     
     return key_iv
 
-def decrypt_DEK(share:bytes, password: bytes):
+def decrypt_DKEK_share_file(share_file: bytes, password: bytes):
 
-    assert len(share) == 64
+    assert len(share_file) == 64
 
-    share_prefix = share[0:8]
-    assert share_prefix.decode('ASCII') == 'Salted__'
+    share_prefix = share_file[0:8]
+    assert share_prefix == dkek_share_file_header
 
-    salt = share[8:16]
+    salt = share_file[8:16]
     logging.info(f'salt (L={len(salt)}): {hex(salt)}')
 
-    ciphertext = share[16:]
+    ciphertext = share_file[16:]
     logging.info(f'ciphertext (L={len(ciphertext)}): {hex(ciphertext)}')
 
-    key_iv = derive_encryption_key(salt, password)
+    key_iv = derive_DKEK_share_encryption_key(salt, password)
 
     logging.info(f'key_iv [L={len(key_iv)}]: {hexlify(key_iv)}')
 
@@ -66,38 +86,12 @@ def decrypt_DEK(share:bytes, password: bytes):
     plain_text = decryptor.update(ciphertext)
     decryptor.finalize()
     
-    expected_padding = unhexlify('10101010101010101010101010101010')
-    assert plain_text.endswith(expected_padding)
+    assert plain_text.endswith(dkek_share_padding)
 
     share = plain_text[:32]
-    logging.info(f'recovered share: {hex(share)}')
+    return share
 
-    dkek = bytes(a ^ b for a, b in zip(share, bytes([0x00]*32)))
-    logging.info(f'recovered dkek: {hex(dkek)}')
-
-    # NitroKey HSM key-check-value logic
-    #
-    kcv_msg = hashlib.sha256()
-    kcv_msg.update(dkek)
-    kcv = kcv_msg.digest()[:8]
-    logging.info(f'DKEK KCV: {hex(kcv)}')
-
-    return
-
-    aes_key = dkek
-    dkek_key_cipher = Cipher(algorithms.AES(aes_key), modes.CBC(bytes([0x00]*16)))
-    dkek_encryptor = dkek_key_cipher.encryptor()
-    recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
-    dkek_encryptor.finalize()
-    logging.info(f'KCV for recovered key: {hex(recovered_kcv)}')
-
-
-def load_local_share_file(path: str):
-    logging.info(f'loading DKEK file share @ {path}')
-    binary_data = None
-    with open(path, mode='rb') as file:
-        binary_data = file.read()
-    return binary_data
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
@@ -105,5 +99,21 @@ logging.root.setLevel(logging.INFO)
 password = 'passwordpassword'.encode('ascii')
 pbe_file_path = 'dkek-test.pbe'
 
-share = load_local_share_file(pbe_file_path)
-dek = decrypt_DEK(share, password)
+logging.info(f'loading DKEK file share @ {pbe_file_path}')
+dkek_share_file = load_binary_file(pbe_file_path)
+
+dkek_share = decrypt_DKEK_share_file(dkek_share_file, password) 
+logging.info(f'recovered share: {hex(dkek_share)}')
+
+dkek = mix_key_share_into_dkek(blank_dkek(), dkek_share)
+logging.info(f'recovered dkek: {hex(dkek)}')
+
+kcv = dkek_kcv(dkek)
+logging.info(f'DKEK KCV: {hex(kcv)}')
+
+# aes_key = dkek
+# dkek_key_cipher = Cipher(algorithms.AES(aes_key), modes.CBC(bytes([0x00]*16)))
+# dkek_encryptor = dkek_key_cipher.encryptor()
+# recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
+# dkek_encryptor.finalize()
+# logging.info(f'KCV for recovered key: {hex(recovered_kcv)}')
