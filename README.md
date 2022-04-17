@@ -124,10 +124,12 @@ pkcs11-tool --login --login-type so --show-info
 ### key generation, import & export
 
 generate ec key  
-```pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:prime256k1 --label aleph```
+
+    pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:prime256k1 --label aleph```
 
 generate BTC key pair (using NIST curve secp256k1, https://neuromancer.sk/std/secg/secp256k1)
-pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:secp256k1 --label btc-test
+
+    pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:secp256k1 --label btc-test
 
 ### key operations
 

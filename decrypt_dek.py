@@ -3,6 +3,7 @@ from binascii import hexlify, unhexlify
 import hashlib
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import cmac
 
 dkek_share_file_header = 'Salted__'.encode('ascii')
 dkek_share_padding = unhexlify('10101010101010101010101010101010')
@@ -91,6 +92,37 @@ def decrypt_DKEK_share_file(share_file: bytes, password: bytes):
     share = plain_text[:32]
     return share
 
+# 	var kencval = this.crypto.digest(Crypto.SHA_256, this.dkek.concat(new ByteString(, HEX)));
+# 	var kenc = new Key();
+# 	kenc.setComponent(Key.AES, kencval);
+# 	return kenc;
+# }
+
+def derive_kek_from_dkek(dkek):
+    m = hashlib.sha256()
+    m.update(dkek + unhexlify("00000001"))
+    key_value = m.digest()
+    cipher = Cipher(algorithms.AES(key_value), modes.CBC(bytes([0x00]*16)))
+    return cipher.encryptor()
+
+# recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
+# dkek_encryptor.finalize()
+
+def derive_mak_from_dkek(dkek):
+    m = hashlib.sha256()
+    m.update(dkek + unhexlify("00000002"))
+    mak_value = m.digest()
+    cipher = cmac.CMAC(algorithms.AES(mak_value))
+    return cipher
+# c.update(b"message to authenticate")
+# c.finalize()
+
+
+
+
+
+
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 logging.basicConfig()
@@ -103,13 +135,21 @@ logging.info(f'loading DKEK file share @ {pbe_file_path}')
 dkek_share_file = load_binary_file(pbe_file_path)
 
 dkek_share = decrypt_DKEK_share_file(dkek_share_file, password) 
-logging.info(f'recovered share: {hex(dkek_share)}')
+logging.info(f'recovered dkek share: {hex(dkek_share)}')
 
 dkek = mix_key_share_into_dkek(blank_dkek(), dkek_share)
 logging.info(f'recovered dkek: {hex(dkek)}')
 
 kcv = dkek_kcv(dkek)
 logging.info(f'DKEK KCV: {hex(kcv)}')
+
+kek = kek_from_dkek(dkek)
+
+# from cryptography.hazmat.primitives import cmac
+# from cryptography.hazmat.primitives.ciphers import algorithms
+# c = cmac.CMAC(algorithms.AES(key))
+# c.update(b"message to authenticate")
+# c.finalize()
 
 # aes_key = dkek
 # dkek_key_cipher = Cipher(algorithms.AES(aes_key), modes.CBC(bytes([0x00]*16)))
