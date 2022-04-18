@@ -5,8 +5,11 @@ import hashlib
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
 
-dkek_share_file_header = 'Salted__'.encode('ascii')
+encrypted_dkek_share_header = 'Salted__'.encode('ascii')
 dkek_share_padding = unhexlify('10101010101010101010101010101010')
+
+kek_padding = unhexlify("00000001")
+mak_padding = unhexlify("00000002")
 
 def blank_dkek():
     return bytes([0x00]*32)
@@ -27,6 +30,13 @@ def load_binary_file(path: str):
     with open(path, mode='rb') as file:
         binary_data = file.read()
     return binary_data
+
+def decrypt_aes_cbc(key, iv, ciphertext):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    decryptor = cipher.decryptor()
+    plain_text = decryptor.update(ciphertext)
+    decryptor.finalize()
+    return plain_text
 
 def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
@@ -59,38 +69,39 @@ def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iteratio
     
     return key_iv
 
-def decrypt_DKEK_share_file(share_file: bytes, password: bytes):
+def decrypt_DKEK_share(
+        encrypted_share: bytes, 
+        password: bytes
+    ):
 
-    assert len(share_file) == 64
+    assert len(encrypted_share) == 64
 
-    share_prefix = share_file[0:8]
-    assert share_prefix == dkek_share_file_header
+    share_prefix = encrypted_share[0:8]
+    assert share_prefix == encrypted_dkek_share_header
 
-    salt = share_file[8:16]
+    salt = encrypted_share[8:16]
+    ciphertext = encrypted_share[16:]
+    
     logging.info(f'salt (L={len(salt)}): {hex(salt)}')
-
-    ciphertext = share_file[16:]
     logging.info(f'ciphertext (L={len(ciphertext)}): {hex(ciphertext)}')
 
     key_iv = derive_DKEK_share_encryption_key(salt, password)
-
-    logging.info(f'key_iv [L={len(key_iv)}]: {hexlify(key_iv)}')
-
     key = key_iv[0:32]
     iv = key_iv[32:]
-    
+
     logging.info(f'key [L={len(key)}]: {hex(key)}')
     logging.info(f'iv: [L={len(iv)}]: {hex(iv)}')
 
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
-    decryptor = cipher.decryptor()
-    plain_text = decryptor.update(ciphertext)
-    decryptor.finalize()
-    
+    plain_text = decrypt_aes_cbc(key, iv, ciphertext)
     assert plain_text.endswith(dkek_share_padding)
 
     share = plain_text[:32]
     return share
+
+def derive_kek_from_dkek(dkek):
+    m = hashlib.sha256()
+    m.update(dkek + kek_padding)
+    return m.digest()
 
 # 	var kencval = this.crypto.digest(Crypto.SHA_256, this.dkek.concat(new ByteString(, HEX)));
 # 	var kenc = new Key();
@@ -98,30 +109,13 @@ def decrypt_DKEK_share_file(share_file: bytes, password: bytes):
 # 	return kenc;
 # }
 
-def derive_kek_from_dkek(dkek):
-    m = hashlib.sha256()
-    m.update(dkek + unhexlify("00000001"))
-    key_value = m.digest()
-    cipher = Cipher(algorithms.AES(key_value), modes.CBC(bytes([0x00]*16)))
-    return cipher.encryptor()
-
-# recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
-# dkek_encryptor.finalize()
-
 def derive_mak_from_dkek(dkek):
     m = hashlib.sha256()
-    m.update(dkek + unhexlify("00000002"))
-    mak_value = m.digest()
-    cipher = cmac.CMAC(algorithms.AES(mak_value))
-    return cipher
+    m.update(dkek + mak_padding)
+    return m.digest()
+
 # c.update(b"message to authenticate")
 # c.finalize()
-
-
-
-
-
-
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -131,10 +125,10 @@ logging.root.setLevel(logging.INFO)
 password = 'passwordpassword'.encode('ascii')
 pbe_file_path = 'dkek-test.pbe'
 
-logging.info(f'loading DKEK file share @ {pbe_file_path}')
+logging.info(f'loading encrypted DKEK share from {pbe_file_path}')
 dkek_share_file = load_binary_file(pbe_file_path)
 
-dkek_share = decrypt_DKEK_share_file(dkek_share_file, password) 
+dkek_share = decrypt_DKEK_share(dkek_share_file, password) 
 logging.info(f'recovered dkek share: {hex(dkek_share)}')
 
 dkek = mix_key_share_into_dkek(blank_dkek(), dkek_share)
@@ -143,17 +137,12 @@ logging.info(f'recovered dkek: {hex(dkek)}')
 kcv = dkek_kcv(dkek)
 logging.info(f'DKEK KCV: {hex(kcv)}')
 
-kek = kek_from_dkek(dkek)
+kek = derive_kek_from_dkek(dkek)
+kek_iv = bytes([0x00]*16)
+kek_cipher = Cipher(algorithms.AES(kek), modes.CBC(kek_iv))
+kek_encryptor = kek_cipher.encryptor()
 
-# from cryptography.hazmat.primitives import cmac
-# from cryptography.hazmat.primitives.ciphers import algorithms
-# c = cmac.CMAC(algorithms.AES(key))
-# c.update(b"message to authenticate")
-# c.finalize()
-
-# aes_key = dkek
-# dkek_key_cipher = Cipher(algorithms.AES(aes_key), modes.CBC(bytes([0x00]*16)))
-# dkek_encryptor = dkek_key_cipher.encryptor()
-# recovered_kcv = dkek_encryptor.update(bytes([0x00] * 16)) 
-# dkek_encryptor.finalize()
-# logging.info(f'KCV for recovered key: {hex(recovered_kcv)}')
+mak = derive_mak_from_dkek(dkek)
+mak_cipher = cmac.CMAC(algorithms.AES(mak))
+# mak_cipher.update(b"message to authenticate")
+# mak_cipher.finalize()

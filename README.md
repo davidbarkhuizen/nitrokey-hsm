@@ -44,7 +44,9 @@ determine location of opensc-pkcs11.so module
 
 initialize HSM, irreversibly setting SO-PIN (write SO-PIN to write-once PROM)  
     
-    pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --init-token --init-pin --so-pin=0000000000000000 --new-pin=xxx --label="test" --pin=xxx
+    pkcs11-tool --init-token --init-pin --so-pin=0000000000000000 --new-pin=xxx --label="test" --pin=xxx
+
+
 
 change so-pin, using so-pin  
 
@@ -80,7 +82,7 @@ generate single password-encrypted pbe DEK share file
     Please retype password to confirm : 
 
     Enciphering DKEK share, please wait...
-    DKEK share created and saved to alpeh-dkek-share.pbe
+    DKEK share created and saved to dkek-test.pbe
 
 convert binary to text to print to paper  
 
@@ -102,7 +104,7 @@ convert dump back to binary
 
 import DKEK  
 
-    $ sc-hsm-tool --import-dkek-share share-under-password-based-encryption.pbe
+    $ sc-hsm-tool --import-dkek-share dkek-test.pbe
 
     Using reader with a card: Nitrokey Nitrokey HSM (DENK00000000000         ) 00 00
     Enter password to decrypt DKEK share : 
@@ -111,7 +113,6 @@ import DKEK
     DKEK share imported
     DKEK shares          : 1
     DKEK key check value : 1234567890123456
-
 
 ### unclassified
 

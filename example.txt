@@ -1,13 +1,11 @@
-dkek-test.pbe
+dkek-test.pbe.b64:
 
 U2FsdGVkX19svhSIBSqUH/GixQX4+9KdFKpErNW7MLzNCX9YBE7+eseQB6Vh7Jga
 FmhlWzIcqCgB39n9xXe6BA==
 
-0000000    6153    746c    6465    5f5f    be6c    8814    2a05    1f94
-0000010    a2f1    05c5    fbf8    9dd2    aa14    ac44    bbd5    bc30
-0000020    09cd    587f    4e04    7afe    90c7    a507    ec61    1a98
-0000030    6816    5b65    1c32    28a8    df01    fdd9    77c5    04ba
-0000040
+$ b64 -d dkek-test.pbe.b64 dkek-test.pbe  
+
+
 
 INFO:root:loading DKEK file share @ dkek-test.pbe
 INFO:root:salt: b'6CBE1488052A941F'
@@ -21,7 +19,6 @@ INFO:root:iv: b'67E6449F70F8AF424408EAD85E3A4A36'
 INFO:root:recovered DKEK: b'C955AF6FB058CA963D270049DE57B75B175D528B8993D7651DCC4650097CAFFB'
 INFO:root:KCV for recovered key: b'8C413C'
 
-
 Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
 Enter password to decrypt DKEK share : 
 
@@ -29,4 +26,62 @@ Deciphering DKEK share, please wait...
 DKEK share imported
 DKEK shares          : 1
 DKEK key check value : 2AFA121E8764A1E3
+
+    $ pkcs11-tool --login --pin f0365bf44b657ba --keypairgen --key-type EC:secp256k1 --label btc-test
+
+Using slot 0 with a present token (0x0)
+Key pair generated:
+Private Key Object; EC
+  label:      btc-test
+  ID:         1ea2dde2f6a5e450cb391e073d2919e582973aef
+  Usage:      sign, derive
+  Access:     none
+Public Key Object; EC  EC_POINT 256 bits
+  EC_POINT:   044104c572506893f3a850ad98206f19585d1c77d6b48796ff9fbd32346e0d850578d0e679b77a15b702b40d7b2d2f9a63e6516e6bee8e33e50b6f97c69b0408106f0c
+  EC_PARAMS:  06052b8104000a
+  label:      btc-test
+  ID:         1ea2dde2f6a5e450cb391e073d2919e582973aef
+  Usage:      verify, derive
+  Access:     none
+
+pkcs15-tool --dump
+
+Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
+PKCS#15 Card [SmartCard-HSM]:
+	Version        : 0
+	Serial number  : DENK0105702
+	Manufacturer ID: www.CardContact.de
+	Flags          : 
+
+Private EC Key [btc-test]
+	Object Flags   : [0x03], private, modifiable
+	Usage          : [0x10C], sign, signRecover, derive
+	Access Flags   : [0x1D], sensitive, alwaysSensitive, neverExtract, local
+	Algo_refs      : 0
+	FieldLength    : 256
+	Key ref        : 1 (0x01)
+	Native         : yes
+	Auth ID        : 01
+	ID             : 1ea2dde2f6a5e450cb391e073d2919e582973aef
+	MD:guid        : 949f32d2-56b2-119a-2a8c-4edd2c167d16
+
+Public EC Key [btc-test]
+	Object Flags   : [0x00]
+	Usage          : [0x40], verify
+	Access Flags   : [0x02], extract
+	FieldLength    : 256
+	Key ref        : 0 (0x00)
+	Native         : no
+	ID             : 1ea2dde2f6a5e450cb391e073d2919e582973aef
+	DirectValue    : <present>
+
+
+export:
+
+sc-hsm-tool --wrap-key wrapped-btc-key.bin --key-reference 1 --pin f0365bf44b657ba
+
+import:
+
+sc-hsm-tool --unwrap-key wrap-key-1.bin --key-reference 1 --pin 648219
+
 
