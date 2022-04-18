@@ -17,7 +17,6 @@ helpmanual.io
 pkcs11-tool  
 https://helpmanual.io/help/pkcs11-tool/  
 
-
 python-pkcs11
 Using with SmartCard-HSM (Nitrokey HSM)  
 https://python-pkcs11.readthedocs.io/en/latest/opensc.html  
@@ -128,7 +127,57 @@ generate ec key
 
 generate BTC key pair (using NIST curve secp256k1, https://neuromancer.sk/std/secg/secp256k1)
 
-    pkcs11-tool --module /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so --login --pin xxx --keypairgen --key-type EC:secp256k1 --label btc-test
+    $ pkcs11-tool --login --pin xxx --keypairgen --key-type EC:secp256k1 --label btc-test
+
+    Using slot 0 with a present token (0x0)
+    Key pair generated:
+    Private Key Object; EC
+    label:      btc-test
+    ID:         272bc2fea76fd825cf980751a58de8191ff7f094
+    Usage:      sign, derive
+    Access:     none
+    Public Key Object; EC  EC_POINT 256 bits
+    EC_POINT:   044104492387dbacdf9abde5f56afee0b2e762a3548c0201ca46c5c0bc4a610cd7f78c87fea9e9c70e6085bd163102835aeb84db80daa3b31cc7a6c1bcf4d9b32a236f
+    EC_PARAMS:  06052b8104000a
+    label:      btc-test
+    ID:         272bc2fea76fd825cf980751a58de8191ff7f094
+    Usage:      verify, derive
+    Access:     none
+
+get key id
+
+    $ pkcs15-tool --dump
+
+    Private EC Key [btc-test]
+        Object Flags   : [0x03], private, modifiable
+        Usage          : [0x10C], sign, signRecover, derive
+        Access Flags   : [0x1D], sensitive, alwaysSensitive, neverExtract, local
+        Algo_refs      : 0
+        FieldLength    : 256
+        Key ref        : 1 (0x01)
+        Native         : yes
+        Auth ID        : 01
+        ID             : 272bc2fea76fd825cf980751a58de8191ff7f094
+        MD:guid        : b6eea0df-0f3e-eb7f-af20-a5404724bf40
+
+    Public EC Key [btc-test]
+        Object Flags   : [0x00]
+        Usage          : [0x40], verify
+        Access Flags   : [0x02], extract
+        FieldLength    : 256
+        Key ref        : 0 (0x00)
+        Native         : no
+        ID             : 272bc2fea76fd825cf980751a58de8191ff7f094
+        DirectValue    : <present>
+
+
+export key
+
+    $ sc-hsm-tool --wrap-key btc-test.wrapped.bin --key-reference 1 --pin 648219
+
+    Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
+
+    $ hexdump -ve '1/1 "%.2x"' btc-test.wrapped.bin > btc-test.wrapped.hex
 
 ### key operations
 

@@ -27,54 +27,24 @@ DKEK share imported
 DKEK shares          : 1
 DKEK key check value : 2AFA121E8764A1E3
 
-    $ pkcs11-tool --login --pin f0365bf44b657ba --keypairgen --key-type EC:secp256k1 --label btc-test
+$ pkcs11-tool --login --pin f0365bf44b657ba --keypairgen --key-type EC:secp256k1 --label btc-test
 
-Using slot 0 with a present token (0x0)
-Key pair generated:
-Private Key Object; EC
-  label:      btc-test
-  ID:         1ea2dde2f6a5e450cb391e073d2919e582973aef
-  Usage:      sign, derive
-  Access:     none
-Public Key Object; EC  EC_POINT 256 bits
-  EC_POINT:   044104c572506893f3a850ad98206f19585d1c77d6b48796ff9fbd32346e0d850578d0e679b77a15b702b40d7b2d2f9a63e6516e6bee8e33e50b6f97c69b0408106f0c
-  EC_PARAMS:  06052b8104000a
-  label:      btc-test
-  ID:         1ea2dde2f6a5e450cb391e073d2919e582973aef
-  Usage:      verify, derive
-  Access:     none
+	Using slot 0 with a present token (0x0)
+	Key pair generated:
+	Private Key Object; EC
+	label:      btc-test
+	ID:         4d8b45c6b9e00aee9c677b595e7b7b72572035ed
+	Usage:      sign, derive
+	Access:     none
+	Public Key Object; EC  EC_POINT 256 bits
+	EC_POINT:   044104a19764d69d2aeada6b3766b7109b26285f478f7116d19c2558bd3a6cb46b62047d2cb0c1d4f7b7c1140744cf5b0410701f4bde469d5e7785a57555f6eeedd84c
+	EC_PARAMS:  06052b8104000a
+	label:      btc-test
+	ID:         4d8b45c6b9e00aee9c677b595e7b7b72572035ed
+	Usage:      verify, derive
+	Access:     none
 
 pkcs15-tool --dump
-
-Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
-PKCS#15 Card [SmartCard-HSM]:
-	Version        : 0
-	Serial number  : DENK0105702
-	Manufacturer ID: www.CardContact.de
-	Flags          : 
-
-Private EC Key [btc-test]
-	Object Flags   : [0x03], private, modifiable
-	Usage          : [0x10C], sign, signRecover, derive
-	Access Flags   : [0x1D], sensitive, alwaysSensitive, neverExtract, local
-	Algo_refs      : 0
-	FieldLength    : 256
-	Key ref        : 1 (0x01)
-	Native         : yes
-	Auth ID        : 01
-	ID             : 1ea2dde2f6a5e450cb391e073d2919e582973aef
-	MD:guid        : 949f32d2-56b2-119a-2a8c-4edd2c167d16
-
-Public EC Key [btc-test]
-	Object Flags   : [0x00]
-	Usage          : [0x40], verify
-	Access Flags   : [0x02], extract
-	FieldLength    : 256
-	Key ref        : 0 (0x00)
-	Native         : no
-	ID             : 1ea2dde2f6a5e450cb391e073d2919e582973aef
-	DirectValue    : <present>
-
 
 export:
 
@@ -85,3 +55,42 @@ import:
 sc-hsm-tool --unwrap-key wrap-key-1.bin --key-reference 1 --pin 648219
 
 
+SEQUENCE (3 elem)
+  OCTET STRING (363 byte) 97E303855DC1C54D0C000A04007F00070202020203000000000000B2C97ABAF6BF457…
+  [0] (3 elem)
+    SEQUENCE (3 elem)
+Offset: 373
+Length: 2+17
+(constructed)
+Value:
+(3 elem)
+      UTF8String btc-test
+      BIT STRING (2 bit) 11
+      OCTET STRING (1 byte) 01
+    SEQUENCE (3 elem)
+      OCTET STRING (20 byte) 4D8B45C6B9E00AEE9C677B595E7B7B72572035ED
+      BIT STRING (9 bit) 001100001
+      INTEGER 1
+    [1] (1 elem)
+      SEQUENCE (2 elem)
+        SEQUENCE (1 elem)
+          OCTET STRING (0 byte)
+        INTEGER 256 <--- size im bits
+  Application 7 (3 elem)
+    Application 33 (2 elem)
+      Application 78 (4 elem)
+        Application 41 (1 byte) 00
+        Application 2 (9 byte) UTCA00001
+        Application 73 (8 elem)
+          OBJECT IDENTIFIER 0.4.0.127.0.7.2.2.2.2.3 bsiTA_ECDSA_SHA256 (BSI TR-03110)
+          [1] (32 byte) FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+          [2] (32 byte) 0000000000000000000000000000000000000000000000000000000000000000
+          [3] (32 byte) 0000000000000000000000000000000000000000000000000000000000000007
+          [4] (65 byte) 0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483A…
+          [5] (32 byte) FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+          [6] (65 byte) 04A19764D69D2AEADA6B3766B7109B26285F478F7116D19C2558BD3A6CB46B62047D2C…
+          [7] (1 byte) 01
+        Application 32 (16 byte) DENK010570200001
+      Application 55 (64 byte) 5A57749F2AC57FE38C18820572AF7FC17093ABA758529724ED20C960C8D5A3136976D0…
+    Application 2 (16 byte) DENK010570200000
+    Application 55 (64 byte) 1F5F4E5192E0EC51D41F677A672CE2502AA01CC785A285CE354D1F529136A6C7130DCF…
