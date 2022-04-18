@@ -207,7 +207,17 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     print(f'key_oid: {hexlify(key_oid)}')
 
     offset = offset + 2 + l
-    l = 2
+    encrypted_blob = xxx[offset:-16]
+    print(len(encrypted_blob), hexlify(encrypted_blob))
+
+    decrypted_blob = decrypt_aes_cbc(derive_kek_from_dkek(dkek), bytes([0x00]*16), encrypted_blob)
+    print(f'decrypted_blob: {hexlify(decrypted_blob)}')
+
+    random_prefix = decrypted_blob[:8]
+    print(f'random_prefix: {hexlify(random_prefix)}')
+
+    [key_size] = struct.unpack('>H', decrypted_blob[8:10])
+    print(f'key size, bits: {key_size}')
 
 
 
