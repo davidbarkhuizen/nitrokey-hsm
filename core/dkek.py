@@ -1,6 +1,7 @@
 import logging
 from binascii import hexlify, unhexlify
 import hashlib
+from os import urandom
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
@@ -38,6 +39,13 @@ def decrypt_aes_cbc(key, iv, ciphertext):
     decryptor.finalize()
     return plain_text
 
+def encrypt_aes_cbc(key, iv, plain_text):
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
+    encryptor = cipher.encryptor()
+    cipher_text = encryptor.update(plain_text)
+    encryptor.finalize()
+    return cipher_text
+
 def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
     
@@ -69,18 +77,18 @@ def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iteratio
     
     return key_iv
 
-def decrypt_DKEK_share(
-        encrypted_share: bytes, 
+def decrypt_DKEK_share_blob(
+        blob: bytes, 
         password: bytes
     ):
 
-    assert len(encrypted_share) == 64
+    assert len(blob) == 64
 
-    share_prefix = encrypted_share[0:8]
+    share_prefix = blob[0:8]
     assert share_prefix == encrypted_dkek_share_header
 
-    salt = encrypted_share[8:16]
-    ciphertext = encrypted_share[16:]
+    salt = blob[8:16]
+    ciphertext = blob[16:]
     
     key_iv = derive_DKEK_share_encryption_key(salt, password)
     key = key_iv[0:32]
@@ -113,9 +121,14 @@ def derive_mak_from_dkek(dkek):
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-def decrypt_dkek(enc_dkek_share: bytes, password_bytes: bytes):
-    dkek_share = decrypt_DKEK_share(enc_dkek_share, password_bytes) 
-    return mix_key_share_into_dkek(blank_dkek(), dkek_share)
+def dkek_from_shares(shares: list):
+   
+    dkek = blank_dkek()
+    
+    for share in shares:    
+        dkek = mix_key_share_into_dkek(dkek, share)
+    
+    return dkek
 
 # kek = derive_kek_from_dkek(dkek)
 # kek_iv = bytes([0x00]*16)
@@ -126,3 +139,20 @@ def decrypt_dkek(enc_dkek_share: bytes, password_bytes: bytes):
 # mak_cipher = cmac.CMAC(algorithms.AES(mak))
 # mak_cipher.update(b"message to authenticate")
 # mak_cipher.finalize()
+
+def encrypt_dkek_share(share: bytes, password: bytes):
+	
+    assert len(share) == 32
+
+    salt = urandom(8)
+
+    key_iv = derive_DKEK_share_encryption_key(salt, password)
+    key = key_iv[0:32]
+    iv = key_iv[32:]
+
+    plain_text = share + dkek_share_padding
+    cipher_text = encrypt_aes_cbc(key, iv, plain_text)
+
+    blob = encrypted_dkek_share_header + salt + cipher_text
+    return blob
+    
