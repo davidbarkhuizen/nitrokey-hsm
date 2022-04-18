@@ -105,19 +105,10 @@ def derive_kek_from_dkek(dkek):
     m.update(dkek + kek_padding)
     return m.digest()
 
-# 	var kencval = this.crypto.digest(Crypto.SHA_256, this.dkek.concat(new ByteString(, HEX)));
-# 	var kenc = new Key();
-# 	kenc.setComponent(Key.AES, kencval);
-# 	return kenc;
-# }
-
 def derive_mak_from_dkek(dkek):
     m = hashlib.sha256()
     m.update(dkek + mak_padding)
     return m.digest()
-
-# c.update(b"message to authenticate")
-# c.finalize()
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -130,21 +121,12 @@ def dkek_from_shares(shares: list):
     
     return dkek
 
-# kek = derive_kek_from_dkek(dkek)
-# kek_iv = bytes([0x00]*16)
-# kek_cipher = Cipher(algorithms.AES(kek), modes.CBC(kek_iv))
-# kek_encryptor = kek_cipher.encryptor()
-
-# mak = derive_mak_from_dkek(dkek)
-# mak_cipher = cmac.CMAC(algorithms.AES(mak))
-# mak_cipher.update(b"message to authenticate")
-# mak_cipher.finalize()
-
-def encrypt_dkek_share(share: bytes, password: bytes):
+def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 	
     assert len(share) == 32
 
-    salt = urandom(8)
+    if salt == None:
+        salt = urandom(8)
 
     key_iv = derive_DKEK_share_encryption_key(salt, password)
     key = key_iv[0:32]
