@@ -1,9 +1,4 @@
 from binascii import unhexlify, hexlify
-import logging
-
-logging.basicConfig()
-logging.root.setLevel(logging.INFO)
-
 import unittest
 from base64 import b64decode
 

@@ -110,6 +110,11 @@ def derive_mak_from_dkek(dkek):
     m.update(dkek + mak_padding)
     return m.digest()
 
+def verify_cmac(mak: bytes, msg: bytes, mac: bytes):
+    c = cmac.CMAC(algorithms.AES(mak))
+    c.update(msg)
+    return c.verify(mac)
+
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 def dkek_from_shares(shares: list):
@@ -137,4 +142,17 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 
     blob = encrypted_dkek_share_header + salt + cipher_text
     return blob
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     
+    cert = blob[:-16]
+    cmac = blob[-16:]
+
+    print(f'L: cert {len(cert)}, blob: {len(cmac)}')
+
+
+    mak = derive_mak_from_dkek(dkek)
+    verify_cmac(mak, cert, cmac)
+  
