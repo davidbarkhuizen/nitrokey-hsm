@@ -46,8 +46,6 @@ initialize HSM, irreversibly setting SO-PIN (write SO-PIN to write-once PROM)
     
     pkcs11-tool --init-token --init-pin --so-pin=0000000000000000 --new-pin=xxx --label="test" --pin=xxx
 
-
-
 change so-pin, using so-pin  
 
     pkcs11-tool --module /usr/local/lib/opensc-pkcs11.so --login --login-type so --so-pin 3537363231383830 --change-pin --new-pin 0123456789012345
@@ -87,7 +85,7 @@ generate single password-encrypted pbe DEK share file
 convert binary to text to print to paper  
 
     # hex (base 16)  
-    $ hexdump -ve '16/1 "%02x " "\n"' dkek-test.pbe > dkek-test.pbe.hex  
+    $ hexdump -ve '1/1 "%.2x"' dkek-test.pbe > dkek-test.pbe.hex  
 
     # base64  
     $ openssl base64 -in dkek-test.pbe > dkek-test.pbe.b64  

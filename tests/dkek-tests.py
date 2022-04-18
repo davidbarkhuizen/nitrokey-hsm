@@ -1,26 +1,27 @@
 from binascii import unhexlify, hexlify
 import unittest
-from base64 import b64decode
 
 from core.dkek import decrypt_DKEK_share_blob, dkek_from_shares, dkek_kcv, encrypt_dkek_share_blob
 
 dkek_share_enc_password = 'passwordpassword'.encode('ascii')
+encrypted_dkek_share = unhexlify('53616c7465645f5f3b2b00cce8b70b2b7f0d0b632c92f3cbdd2e91f3f4f1f65593c2afd11409a9990b89aec513664b5c36e57ce8af10746eed02442be23209b9')
 
-encrypted_dkek_share_b64  = 'U2FsdGVkX19svhSIBSqUH/GixQX4+9KdFKpErNW7MLzNCX9YBE7+eseQB6Vh7JgaFmhlWzIcqCgB39n9xXe6BA=='
-encrypted_dkek_share = b64decode(encrypted_dkek_share_b64.encode('ascii'))
-dkek_share_enc_salt = unhexlify('6cbe1488052a941f')
-decrypted_dkek_share = unhexlify('c955af6fb058ca963d270049de57b75b175d528b8993d7651dcc4650097caffb')
+dkek_share_enc_salt = unhexlify('3B2B00CCE8B70B2B')
+decrypted_dkek_share = unhexlify('2848cb6e994f5a00c365c3c255ed130512ce1eb06bf08d348eeb8b2f866e3e50')
 
-ref_dkek_kcv = unhexlify('2AFA121E8764A1E3')
-ref_dkek = unhexlify('c955af6fb058ca963d270049de57b75b175d528b8993d7651dcc4650097caffb')
+ref_dkek_kcv = unhexlify('97E303855DC1C54D')
+ref_dkek = unhexlify('2848cb6e994f5a00c365c3c255ed130512ce1eb06bf08d348eeb8b2f866e3e50')
 
 class TestDKEK(unittest.TestCase):
     
     def test_decryption_of_dkek_share(self):
 
         dkek_share = decrypt_DKEK_share_blob(encrypted_dkek_share, dkek_share_enc_password)
+        print(f'dkek share {hexlify(dkek_share)}')
         dkek = dkek_from_shares([dkek_share])        
+        print(f'dkek {hexlify(dkek)}')
         calced_kcv = dkek_kcv(dkek)
+        print(f'kcv {hexlify(calced_kcv)}')
         self.assertEqual(calced_kcv, ref_dkek_kcv)
 
     def test_encryption_of_dkek_share(self):

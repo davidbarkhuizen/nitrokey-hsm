@@ -88,6 +88,8 @@ def decrypt_DKEK_share_blob(
     assert share_prefix == encrypted_dkek_share_header
 
     salt = blob[8:16]
+    print(f'salt {hex(salt)}')
+
     ciphertext = blob[16:]
     
     key_iv = derive_DKEK_share_encryption_key(salt, password)
@@ -110,10 +112,15 @@ def derive_mak_from_dkek(dkek):
     m.update(dkek + mak_padding)
     return m.digest()
 
+def calc_cmac(mak: bytes, msg: bytes):
+    cipher = cmac.CMAC(algorithms.AES(mak))
+    cipher.update(msg)
+    return cipher.finalize()
+
 def verify_cmac(mak: bytes, msg: bytes, mac: bytes):
     c = cmac.CMAC(algorithms.AES(mak))
     c.update(msg)
-    return c.verify(mac)
+    c.verify(mac)
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -150,9 +157,15 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     cert = blob[:-16]
     cmac = blob[-16:]
 
-    print(f'L: cert {len(cert)}, blob: {len(cmac)}')
+    assert blob == cert + cmac
 
+    print(f'L: cert {len(cert)}, cmac: {len(cmac)}')
 
     mak = derive_mak_from_dkek(dkek)
-    verify_cmac(mak, cert, cmac)
+    calced_cmac = calc_cmac(mak, cert)
+
+    print(f'blob cmac   {hex(cmac)}')
+    print(f'calced cmac {hex(calced_cmac)}')
+        
+    #verify_cmac(mak, cert, cmac)
   
