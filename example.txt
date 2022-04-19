@@ -59,11 +59,11 @@ SEQUENCE (3 elem)
   OCTET STRING (363 byte) 97E303855DC1C54D0C000A04007F00070202020203000000000000B2C97ABAF6BF457…
   [0] (3 elem)
     SEQUENCE (3 elem)
-Offset: 373
-Length: 2+17
-(constructed)
-Value:
-(3 elem)
+        Offset: 373
+        Length: 2+17
+        (constructed)
+        Value:
+        (3 elem)
       UTF8String btc-test
       BIT STRING (2 bit) 11
       OCTET STRING (1 byte) 01
