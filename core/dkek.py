@@ -4,6 +4,7 @@ import hashlib
 from os import urandom
 from enum import Enum
 import struct
+import asn1
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
@@ -162,15 +163,19 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 
 def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
 
-    # TODO parse asn.1
-    # blob below is actually the first element (an octet string) in an asn.1 SEQUENCE of l=3
-    #
-    # SEQUENCE (3 elem)
-    #   OCTET STRING (363 byte) 97E303855DC1C54D0C000A04007F00070202020203000000000000B2C97ABAF6BF457…
-    #   ... (2)
-    #   ... (3)
+    decoder = asn1.Decoder()
+    decoder.start(blob)
 
-    blob = unhexlify('97e303855dc1c54d0c000a04007f00070202020203000000000000b2c97abaf6bf457fd94d5d76eb668dd10d042b3aebacc4f5b36f723e1ca129c0b6676f2b63ba6accf71923b6bd8d2c3a9190e19722c763c3082c35605caaa4d2c2eef72b42c5b5040da7f9a7a5450d33f49722137f479f9f34bf8d79d08ff109c756edb3c1ff77b5b2edc548da72629708bc618f5c262591420d45c5decb6cc5cd4aef328c8320aa90aa1f755f0aaee27af363cc5db5d21d912570866884c491c51325df73194bb641fd74080e49559a3a11a96c29eccddbf8dcad16352588a8b58990adf360df03e0e9d6081772d89a33b38931c64ebf4f9c8a3aa10fc87d71525a299401739531c0856b694bc124b2df87183bec684824bf57dba60ca511f3be96fcf16c06a4c4ad9c5c844d04d0f3d8a95208ea818d92263d1b754b0a840bd41b8d12f328b891f7bbad8f84806f5cfc24faa7b38b369fb98efdb77bccfb5af27e6021516b79619479e6138663277d')
+    tag, value = decoder.read()
+    print(f'{tag}, L = {len(value)}')
+
+    x_decoder = asn1.Decoder()
+    x_decoder.start(value)
+
+    tag, value = x_decoder.read()
+    print(f'{tag}, L = {len(value)}')
+
+    blob = value
 
     def generate_unpacker(source: bytes):
 
@@ -187,7 +192,7 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     raw_key_type = blob[8]   
     key_type = KeyType(raw_key_type)
     print(f'key type {key_type.name} ({raw_key_type})')
-
+    
     get_blob_obj_at = generate_unpacker(blob)
 
     offset = 9

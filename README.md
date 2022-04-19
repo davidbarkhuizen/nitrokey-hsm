@@ -21,6 +21,9 @@ python-pkcs11
 Using with SmartCard-HSM (Nitrokey HSM)  
 https://python-pkcs11.readthedocs.io/en/latest/opensc.html  
 
+asn1 pip library
+https://python-asn1.readthedocs.io/en/latest/
+
 ### install
 
 ubuntu apt packages to install:  
@@ -173,11 +176,11 @@ get key id
 
 export key
 
-    $ sc-hsm-tool --wrap-key btc-test.wrapped.bin --key-reference 1 --pin 648219
+    $ sc-hsm-tool --wrap-key wrapped-btc-key.bin --key-reference 1 --pin 648219
 
     Using reader with a card: Nitrokey Nitrokey HSM (DENK01057020000         ) 00 00
 
-    $ hexdump -ve '1/1 "%.2x"' btc-test.wrapped.bin > btc-test.wrapped.hex
+    $ hexdump -ve '1/1 "%.2x"' wrapped-btc-key.bin > wrapped-btc-key.hex
 
 ### key operations
 

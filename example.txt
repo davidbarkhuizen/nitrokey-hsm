@@ -54,7 +54,6 @@ import:
 
 sc-hsm-tool --unwrap-key wrap-key-1.bin --key-reference 1 --pin 648219
 
-
 SEQUENCE (3 elem)
   OCTET STRING (363 byte) 97E303855DC1C54D0C000A04007F00070202020203000000000000B2C97ABAF6BF457…
   [0] (3 elem)
@@ -94,3 +93,80 @@ SEQUENCE (3 elem)
       Application 55 (64 byte) 5A57749F2AC57FE38C18820572AF7FC17093ABA758529724ED20C960C8D5A3136976D0…
     Application 2 (16 byte) DENK010570200000
     Application 55 (64 byte) 1F5F4E5192E0EC51D41F677A672CE2502AA01CC785A285CE354D1F529136A6C7130DCF…
+
+// --------------------------------------------------------------------------------
+
+openssl ecparam -genkey -name secp256k1 -rand /dev/urandom -outform PEM -out openssl.ec.pem  
+openssl ec -in openssl.ec.pem -outform DER -out openssl.ec.der
+hexdump -ve '1/1 "%.2x"' openssl.ec.der > openssl.ec.hex
+openssl x509 -in openssl.ec.pem -text
+
+
+openssl ec -in openssl.ec.pem -inform PEM -text
+
+openssl ecparam -in openssl.ec.pem -text -param_enc explicit -noout
+
+------------------------
+
+SEQUENCE(OF) - 0482016b97e303855dc1...
+    OCTET STRING - 97e303855dc1c54d0c00...
+    End-of-Content (EOC) - 30110c086274632d7465...
+        SEQUENCE(OF) - 0c086274632d74657374...
+            UTF8String - btc-test
+            BIT STRING - 06c0
+            OCTET STRING - 01
+        SEQUENCE(OF) - 04144d8b45c6b9e00aee...
+            OCTET STRING - 4d8b45c6b9e00aee9c67...
+            BIT STRING - 073080
+            INTEGER - 1
+        BOOLEAN - 30083002040002020100
+            SEQUENCE(OF) - 3002040002020100
+                SEQUENCE(OF) - 0400
+                    OCTET STRING - 
+                INTEGER - 256
+    Object Descriptor - 7f2182018c7f4e820144...
+        DATE-TIME - 7f4e8201445f29010042...
+            78 - 5f290100420955544341...
+                41 - 00
+                INTEGER - 555443413030303031
+                73 - 060a04007f0007020202...
+                    OBJECT IDENTIFIER - 0.4.0.127.0.7.2.2.2.2.3 (unknown OID)
+                    BOOLEAN - ffffffffffffffffffff...
+                    INTEGER - 00000000000000000000...
+                    BIT STRING - 00000000000000000000...
+                    OCTET STRING - 0479be667ef9dcbbac55...
+                    NULL - ffffffffffffffffffff...
+                    OBJECT IDENTIFIER - 04a19764d69d2aeada6b...
+                    Object Descriptor - 01
+                TIME-OF-DAY - 44454e4b303130353730...
+            55 - 5a57749f2ac57fe38c18...
+        INTEGER - 44454e4b303130353730...
+        55 - 1f5f4e5192e0ec51d41f...
+
+compare openssl export of secp256k1 params from key created with opensll
+
+  $ openssl ecparam -genkey -name secp256k1 -rand /dev/urandom -outform PEM -out openssl.ec.pem
+  $ openssl ecparam -in openssl.ec.pem -text -param_enc explicit -noout
+
+  Field Type: prime-field
+  Prime:
+      00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+      ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:fe:ff:
+      ff:fc:2f
+  A:    0
+  B:    7 (0x7)
+  Generator (uncompressed):
+      04:79:be:66:7e:f9:dc:bb:ac:55:a0:62:95:ce:87:
+      0b:07:02:9b:fc:db:2d:ce:28:d9:59:f2:81:5b:16:
+      f8:17:98:48:3a:da:77:26:a3:c4:65:5d:a4:fb:fc:
+      0e:11:08:a8:fd:17:b4:48:a6:85:54:19:9c:47:d0:
+      8f:fb:10:d4:b8
+  Order: 
+      00:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+      ff:fe:ba:ae:dc:e6:af:48:a0:3b:bf:d2:5e:8c:d0:
+      36:41:41
+  Cofactor:  1 (0x1)
+
+
+
+
