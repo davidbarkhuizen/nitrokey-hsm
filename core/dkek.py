@@ -163,17 +163,21 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 
 def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
 
+    def report_on(label:str, target):
+        
+        try: 
+            target_str = hexlify(target)
+        except:
+            target_str = str(target)
+        
+        print(f'{label: <20} {target_str}')
+
     decoder = asn1.Decoder()
     decoder.start(blob)
-
     tag, value = decoder.read()
-    print(f'{tag}, L = {len(value)}')
-
     x_decoder = asn1.Decoder()
     x_decoder.start(value)
-
     tag, value = x_decoder.read()
-    print(f'{tag}, L = {len(value)}')
 
     blob = value
 
@@ -186,18 +190,20 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
 
         return get_obj_from_blob
 
+
     dkek_kcv = blob[:8]
-    print(f'DKEK KCV {hexlify(dkek_kcv)}')
+    report_on('DKEK KCV', dkek_kcv)
 
     raw_key_type = blob[8]   
     key_type = KeyType(raw_key_type)
-    print(f'key type {key_type.name} ({raw_key_type})')
+    report_on('key_type', f'{key_type.name} ({raw_key_type})')
     
     get_blob_obj_at = generate_unpacker(blob)
 
     offset = 9
     [oid, obj_len,offset] = get_blob_obj_at(offset)
-    print(hexlify(oid))
+    report_on('oid', oid)
+
     # id-TA-ECDSA-SHA-256 0.4.0.127.0.7.2.2.2.2.3
 
     # 0000 allowed algos
@@ -205,24 +211,22 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     # 0000 key OID
 
     [allowed_algos, size, offset] = get_blob_obj_at(offset)
-    print(f'allowed_algos: {hexlify(allowed_algos)}')
+    report_on('allowed_algos', allowed_algos)
 
     [access_conditions, size, offset] = get_blob_obj_at(offset)
-    print(f'access_conditions: {hexlify(access_conditions)}')
+    report_on('access_conditions', access_conditions)
 
     [key_oid, size, offset] = get_blob_obj_at(offset)
-    print(f'key_oid: {hexlify(key_oid)}')
+    report_on('key_oid', key_oid)
 
-    encrypted_blob = blob[offset:-16] # TODO check
-    print(len(encrypted_blob), hexlify(encrypted_blob))
+    encrypted_blob = blob[offset:-16] # TODO check what is in the last 16 bytes !!!
 
     kek = derive_kek_from_dkek(dkek)
     iv = bytes([0x00]*16)
     decrypted_blob = decrypt_aes_cbc(kek, iv, encrypted_blob)
-    print(f'decrypted_blob: {hexlify(decrypted_blob)}')
 
     random_prefix = decrypted_blob[:8]
-    print(f'random_prefix: {hexlify(random_prefix)}')
+    report_on('random_prefix', random_prefix)
 
     get_key_obj_at = generate_unpacker(decrypted_blob)
 
@@ -232,29 +236,22 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
     offset = 10
     
     [a, size, offset] = get_key_obj_at(offset)
-    print(f'a: {hexlify(a)}')
+    report_on('a', a)
 
     [b, size, offset] = get_key_obj_at(offset)
-    print(f'b: {hexlify(b)}')
+    report_on('b', b)
 
     [prime_factor, size, offset] = get_key_obj_at(offset)
-    print(f'prime_factor: {hexlify(prime_factor)}')
+    report_on('prime_factor', prime_factor)
 
     [order, size, offset] = get_key_obj_at(offset)
-    print(f'order: {hexlify(order)}')
+    report_on('order', order)
 
     [generator_g, size, offset] = get_key_obj_at(offset)
-    print(f'generator_g: {hexlify(generator_g)}')
+    report_on('generator_g', generator_g)
 
     [secret_d, size, offset] = get_key_obj_at(offset)
-    print(f'secret_d: {hexlify(secret_d)}')
+    report_on('secret_d', secret_d)
 
     [pub_point_q, size, offset] = get_key_obj_at(offset)
-    print(f'pub_point_q: {hexlify(pub_point_q)}')
-
-    # mak = derive_mak_from_dkek(dkek)
-    # print(f'len(mak) {len(mak)}')
-    # calced_cmac = calc_cmac(mak, cert)
-
-    # print(f'blob cmac   {hex(blob_cmac)}')
-    # print(f'calced cmac {hex(calced_cmac)}')
+    report_on('pub_point_q', pub_point_q)

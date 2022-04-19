@@ -9,6 +9,8 @@ wrapped_btc_key = unhexlify('3082039a0482016b97e303855dc1c54d0c000a04007f0007020
 class TestKeyWrapping(unittest.TestCase):
     
     def test_encryption_of_wrapped_btc_key(self):
+        print()
+        print()
         decrypt_wrapped_key_blob(dkek, wrapped_btc_key)
         self.assertEqual(True, True)
 
