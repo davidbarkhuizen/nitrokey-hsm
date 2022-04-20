@@ -170,7 +170,7 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
         except:
             target_str = str(target)
         
-        print(f'{label: <20} {target_str}')
+        print(f'{label: <20} ({len(target):>3}) {target_str}')
 
     decoder = asn1.Decoder()
     decoder.start(blob)

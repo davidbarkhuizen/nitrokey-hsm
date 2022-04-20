@@ -173,7 +173,6 @@ get key id
         ID             : 272bc2fea76fd825cf980751a58de8191ff7f094
         DirectValue    : <present>
 
-
 export key
 
     $ sc-hsm-tool --wrap-key wrapped-btc-key.bin --key-reference 1 --pin 648219
