@@ -6,6 +6,8 @@ from enum import Enum
 import struct
 import asn1
 
+from _md5 import md5 as MD5 # faster than hashlib.md5 (by factor of 2)
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
 
@@ -21,12 +23,25 @@ class KeyType(Enum):
     ECC = 12
     AES = 15
 
+import time
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()        
+        elapsed_ms = (te - ts) * 1000
+        print(f'{method.__name__}: {elapsed_ms} ms')
+        return result
+    return timed
+
 def blank_dkek():
     return bytes([0x00]*32)
 
 def mix_key_share_into_dkek(dkek, share):    
     return bytes(a ^ b for a, b in zip(dkek, share))
 
+@timeit
 def calc_dkek_kcv(dkek):
     kcv_msg = hashlib.sha256()
     kcv_msg.update(dkek)
@@ -41,6 +56,7 @@ def load_binary_file(path: str):
         binary_data = file.read()
     return binary_data
 
+@timeit
 def decrypt_aes_cbc(key, iv, ciphertext):
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
@@ -48,6 +64,7 @@ def decrypt_aes_cbc(key, iv, ciphertext):
     decryptor.finalize()
     return plain_text
 
+@timeit
 def encrypt_aes_cbc(key, iv, plain_text):
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     encryptor = cipher.encryptor()
@@ -55,16 +72,19 @@ def encrypt_aes_cbc(key, iv, plain_text):
     encryptor.finalize()
     return cipher_text
 
+@timeit
 def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
     
+    print('deriving DKEK share encryption password')
+
     d = bytes(0)
     
     key_iv = bytes([]) # bytes([0x00]*48) # 48 = 32 + 16
 
     for j in range(3):
 
-        logging.info(f'deriving DKEK share encryption key (step {j+1} of 3)...')
+        print(f'deriving DKEK share encryption key (step {j+1} of 3)...')
         
         nd = d + password
         d = nd
@@ -75,9 +95,7 @@ def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iteratio
         to_hash = d
         hashed = None
         for i in range(hash_iterations):
-            m = hashlib.md5()
-            m.update(to_hash)
-            hashed = m.digest()
+            hashed = MD5(to_hash).digest()
             to_hash = hashed
 
         key_iv = key_iv + hashed
@@ -86,6 +104,7 @@ def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iteratio
     
     return key_iv
 
+@timeit
 def decrypt_DKEK_share_blob(
         blob: bytes, 
         password: bytes
@@ -111,21 +130,25 @@ def decrypt_DKEK_share_blob(
     share = plain_text[:32]
     return share
 
+@timeit
 def derive_kek_from_dkek(dkek):
     m = hashlib.sha256()
     m.update(dkek + kek_padding)
     return m.digest()
 
+@timeit
 def derive_mak_from_dkek(dkek):
     m = hashlib.sha256()
     m.update(dkek + mak_padding)
     return m.digest()
 
+@timeit
 def calc_cmac(mak: bytes, msg: bytes):
     cipher = cmac.CMAC(algorithms.AES(mak))
     cipher.update(msg)
     return cipher.finalize()
 
+@timeit
 def verify_cmac(mak: bytes, msg: bytes, mac: bytes):
     c = cmac.CMAC(algorithms.AES(mak))
     c.update(msg)
@@ -142,6 +165,7 @@ def dkek_from_shares(shares: list):
     
     return dkek
 
+@timeit
 def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 	
     assert len(share) == 32
@@ -161,6 +185,7 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+@timeit
 def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
 
     def report_on(label:str, target):
