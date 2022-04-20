@@ -1,15 +1,11 @@
-import logging
-from binascii import hexlify, unhexlify
-import hashlib
+import struct, asn1, time, logging, hashlib, base64
 from os import urandom
 from enum import Enum
-import struct
-import asn1
-
+from collections import namedtuple
 from _md5 import md5 as MD5 # faster than hashlib.md5 (by factor of 2)
-
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
+from binascii import hexlify, unhexlify
 
 encrypted_dkek_share_header = 'Salted__'.encode('ascii')
 dkek_share_padding = unhexlify('10101010101010101010101010101010')
@@ -23,7 +19,8 @@ class KeyType(Enum):
     ECC = 12
     AES = 15
 
-import time
+ECKey = namedtuple('ECKey',
+    'random_prefix key_size a b prime_factor order generator_g secret_d pub_q')
 
 def timeit(method):
     def timed(*args, **kw):
@@ -34,6 +31,16 @@ def timeit(method):
         print(f'{method.__name__}: {elapsed_ms} ms')
         return result
     return timed
+
+def load_binary_file(path: str):
+    binary_data = None
+    with open(path, mode='rb') as file:
+        binary_data = file.read()
+    return binary_data
+
+def write_text_file(path: str, text: str):
+    with open(path, mode='wt') as file:
+        file.write(text)
 
 def blank_dkek():
     return bytes([0x00]*32)
@@ -49,12 +56,6 @@ def calc_dkek_kcv(dkek):
 
 def hex(b):
     return hexlify(b).upper()
-
-def load_binary_file(path: str):
-    binary_data = None
-    with open(path, mode='rb') as file:
-        binary_data = file.read()
-    return binary_data
 
 @timeit
 def decrypt_aes_cbc(key, iv, ciphertext):
@@ -195,7 +196,9 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
         except:
             target_str = str(target)
         
-        print(f'{label: <20} ({len(target):>3}) {target_str}')
+        l = len(target) if hasattr(target, '__len__') else '?'
+
+        print(f'{label: <20} ({l:>3}) {target_str}')
 
     decoder = asn1.Decoder()
     decoder.start(blob)
@@ -251,34 +254,58 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
     decrypted_blob = decrypt_aes_cbc(kek, iv, encrypted_blob)
 
     random_prefix = decrypted_blob[:8]
-    report_on('random_prefix', random_prefix)
-
     get_key_obj_at = generate_unpacker(decrypted_blob)
-
     [key_size] = struct.unpack('>H', decrypted_blob[8:10])
-    print(f'key size, bits: {key_size}')
 
     offset = 10
-    
+
     [a, size, offset] = get_key_obj_at(offset)
-    report_on('a', a)
-
     [b, size, offset] = get_key_obj_at(offset)
-    report_on('b', b)
-
     [prime_factor, size, offset] = get_key_obj_at(offset)
-    report_on('prime_factor', prime_factor)
-
     [order, size, offset] = get_key_obj_at(offset)
-    report_on('order', order)
-
     [generator_g, size, offset] = get_key_obj_at(offset)
-    report_on('generator_g', generator_g)
-
     [secret_d, size, offset] = get_key_obj_at(offset)
-    report_on('secret_d', secret_d)
-
     [pub_point_q, size, offset] = get_key_obj_at(offset)
+
+    report_on('key size, bits', key_size)
+    report_on('random_prefix', random_prefix)
+    report_on('a', a)    
+    report_on('b', b)    
+    report_on('prime_factor', prime_factor)    
+    report_on('order', order)
+    report_on('generator_g', generator_g)
+    report_on('secret_d', secret_d)
     report_on('pub_point_q', pub_point_q)
 
-    return None # TODO key structure
+    return ECKey(
+        random_prefix, 
+        key_size, 
+        a, 
+        b, 
+        prime_factor, 
+        order, 
+        generator_g, 
+        secret_d, 
+        pub_point_q)
+
+def unwrap_ec_key(encrypted_dkek_share: bytes, password: bytes, wrapped_key: bytes):
+    dkek_share = decrypt_DKEK_share_blob(encrypted_dkek_share, password)
+    dkek = dkek_from_shares([dkek_share])        
+    calced_kcv = calc_dkek_kcv(dkek)
+    print(f'dkek kcv {hexlify(calced_kcv)}')
+    return decrypt_dkek_wrapped_ec_key(dkek, wrapped_key)
+
+def eckey_to_pem(eckey: ECKey):
+    
+    header = unhexlify('30740201010420')
+    priv_key = eckey.secret_d
+    joiner = unhexlify('a00706052b8104000aa144034200')
+    pub_key = eckey.pub_q
+
+    der = header + priv_key + joiner + pub_key
+
+    return '\n'.join([
+        '-----BEGIN/END EC PRIVATE KEY-----',
+        base64.b64encode(der).decode('ascii'),
+        '-----BEGIN/END EC PRIVATE KEY-----'
+    ])

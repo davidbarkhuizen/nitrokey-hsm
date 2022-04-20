@@ -1,1 +1,1 @@
-python unwrap-ec-key.py reference/data/dkek-test.pbe passwordpassword reference/data/btc-test-key.der
+python unwrap-ec-key.py reference/data/dkek-test.pbe passwordpassword reference/data/btc-test-key.der reference/data/btc-test-key.pem
