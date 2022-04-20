@@ -27,7 +27,7 @@ def blank_dkek():
 def mix_key_share_into_dkek(dkek, share):    
     return bytes(a ^ b for a, b in zip(dkek, share))
 
-def dkek_kcv(dkek):
+def calc_dkek_kcv(dkek):
     kcv_msg = hashlib.sha256()
     kcv_msg.update(dkek)
     return kcv_msg.digest()[:8]
@@ -161,7 +161,7 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
+def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
 
     def report_on(label:str, target):
         
@@ -255,3 +255,5 @@ def decrypt_wrapped_key_blob(dkek: bytes, blob: bytes):
 
     [pub_point_q, size, offset] = get_key_obj_at(offset)
     report_on('pub_point_q', pub_point_q)
+
+    return None # TODO key structure

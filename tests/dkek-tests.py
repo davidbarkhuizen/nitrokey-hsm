@@ -1,7 +1,7 @@
 from binascii import unhexlify, hexlify
 import unittest
 
-from core.dkek import decrypt_DKEK_share_blob, dkek_from_shares, dkek_kcv, encrypt_dkek_share_blob
+from core.dkek import decrypt_DKEK_share_blob, dkek_from_shares, calc_dkek_kcv, encrypt_dkek_share_blob
 
 dkek_share_enc_password = 'passwordpassword'.encode('ascii')
 encrypted_dkek_share = unhexlify('53616c7465645f5f3b2b00cce8b70b2b7f0d0b632c92f3cbdd2e91f3f4f1f65593c2afd11409a9990b89aec513664b5c36e57ce8af10746eed02442be23209b9')
@@ -20,7 +20,7 @@ class TestDKEK(unittest.TestCase):
         print(f'dkek share {hexlify(dkek_share)}')
         dkek = dkek_from_shares([dkek_share])        
         print(f'dkek {hexlify(dkek)}')
-        calced_kcv = dkek_kcv(dkek)
+        calced_kcv = calc_dkek_kcv(dkek)
         print(f'kcv {hexlify(calced_kcv)}')
         self.assertEqual(calced_kcv, ref_dkek_kcv)
 
