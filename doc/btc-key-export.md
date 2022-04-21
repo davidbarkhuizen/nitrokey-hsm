@@ -1,10 +1,8 @@
-# BTC Key Generation & Export
+# NitroKey HSM BTC Cold Storage Wallet Initialization Procedure
 
-## DKEK
+## 2 Initialize HSM for 1 DKEK Share
 
-### Initialize HSM for 1 DKEK Share
-
-re-initialize HSM, setting user pin to yyy, and configuring for a single DKEK key share file
+re-initialize HSM using so pin, resetting user pin, and configuring for a single DKEK key share file
     
     $ sc-hsm-tool --initialize --so-pin c20257d49033ac93 --pin f0365bf44b657ba --dkek-shares 1
 

@@ -185,6 +185,47 @@ export key
 
     $ hexdump -ve '1/1 "%.2x"' wrapped-btc-key.bin > wrapped-btc-key.hex
 
+sample exported key:
+
+SEQUENCE (3 elem)
+  OCTET STRING (363 byte) 97E303855DC1C54D 0C000A04007F000702020202030000000000000B252EC58195361…
+  [0] (3 elem)
+    SEQUENCE (3 elem)
+      UTF8String btc-test <--- label
+        Offset: 375
+        Length: 2+8
+        Value:
+        btc-test
+      BIT STRING (2 bit) 11
+      OCTET STRING (1 byte) 01
+    SEQUENCE (3 elem)
+      OCTET STRING (20 byte) 2D661828C62CC3C2E7801588CAF510510B29572E
+      BIT STRING (9 bit) 001100001
+      INTEGER 1
+    [1] (1 elem)
+      SEQUENCE (2 elem)
+        SEQUENCE (1 elem)
+          OCTET STRING (0 byte)
+        INTEGER 256 <-- ECC key size in bits
+  Application 7 (3 elem)
+    Application 33 (2 elem)
+      Application 78 (4 elem)
+        Application 41 (1 byte) 00
+        Application 2 (9 byte) UTCA00001 <-- public key reference ? UT + 
+        Application 73 (8 elem)
+          OBJECT IDENTIFIER 0.4.0.127.0.7.2.2.2.2.3 bsiTA_ECDSA_SHA256 (BSI TR-03110)
+          [1] (32 byte) FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+          [2] (32 byte) 0000000000000000000000000000000000000000000000000000000000000000
+          [3] (32 byte) 0000000000000000000000000000000000000000000000000000000000000007
+          [4] (65 byte) 0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483A…
+          [5] (32 byte) FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+          [6] (65 byte) 0410672D3327CCFEFB55EE6C7CDAEDFED0212E40EFDC9391AAB3D8070111EC90B0750E…
+          [7] (1 byte) 01
+        Application 32 (16 byte) DENK010570200001
+      Application 55 (64 byte) FF359A24804A184936A0F9CE3B8558CF75D8AD384B1D8F7126941AF301B0B2CFACC93A…
+    Application 2 (16 byte) DENK010570200000
+    Application 55 (64 byte) 5569436B4A785BB00EA45D923EF35B78CAF18B2BBC47ACF5DE9755CA5F1FCBEB14CBCE…
+
 ### key operations
 
 ## specifications & performance
