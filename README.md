@@ -5,6 +5,10 @@ nitrokey-hsm btc node
 
 ### references
 
+Olaf Kirch <okir@suse.de>
+pkcs11-tool - Man Page
+https://www.mankier.com/1/pkcs11-tool
+
 Remy van Elst
 Get started with the Nitrokey HSM or SmartCard-HSM
 https://raymii.org/s/articles/Get_Started_With_The_Nitrokey_HSM.html

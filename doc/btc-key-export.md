@@ -106,3 +106,66 @@ re-initialize HSM, setting user pin to yyy, and configuring for a single DKEK ke
 
     $ hexdump -ve '1/1 "%.2x"' btc-test-key.der > btc-test-key.hex 
 
+### Dump Plaintext EC Key
+
+    $ openssl ec -in btc-test-key.pem -inform pem -text -param_out
+
+    read EC key
+    Private-Key: (256 bit)
+    priv:
+        72:1f:b1:60:e3:ae:01:22:6c:38:a7:9e:70:51:91:
+        19:b4:06:84:9f:13:fa:f8:78:e7:87:a6:be:11:1c:
+        0d:0f
+    pub:
+        04:34:de:60:89:5f:e7:94:95:43:38:8c:01:aa:68:
+        b9:c8:25:dc:9a:2c:34:fa:54:2a:1a:23:04:a9:40:
+        81:98:a2:14:f3:55:f6:e7:45:2b:e0:fd:03:59:d3:
+        0a:75:c0:23:b9:4a:03:02:78:3e:46:3d:a2:e9:c0:
+        b1:17:9b:ce:b5
+    ASN1 OID: secp256k1
+    writing EC key
+    -----BEGIN EC PARAMETERS-----
+    BgUrgQQACg==
+    -----END EC PARAMETERS-----
+
+### Sign Text File with EC Key
+
+message.txt
+
+    peace be upon the righteous and the innocent
+
+sign using key, output to binary file message.sig  
+
+    $ openssl dgst -ecdsa -sign btc-test-key.pem -keyform pem -out message.openssl.sig message.txt
+    
+sign using key, output hex to text file message.sig.hex  
+    
+    $ openssl dgst -sign btc-test-key.pem -keyform pem -out message.sig.hex -hex message.txt
+
+    EC-SHA256(message.txt)= 3045022100845b4a30889280471f90401560df252fb6652afab7f3efbc6349c41c741225740220099524e5eb50b3f30de55ebe0ad77c8f641fb8b4bc7f63fac8b7cdf654fda82b
+
+list mechanisms supported by HSM
+
+    $ pkcs11-tool --slot 0 -M
+
+    ECDSA, keySize={192,521}, hw, sign, other flags=0x1d00000
+    ECDSA-SHA1, keySize={192,521}, hw, sign, other flags=0x1d00000
+
+create reference signature using key inside HSM:
+
+    # ECDSA
+    $ pkcs11-tool --pin f0365bf44b657ba --sign --id 6ad40c319318588593caae7b24a956175f4d46e7 --mechanism ECDSA-SHA1 --input-file binary_msg.bin --output-file binary_msg.sig.bin
+
+    $ xxd -p binary_msg.sig.bin | tr -d \\n > binary_msg.sig.hex
+
+first verify newly created signature at source:
+
+    $ pkcs11-tool --pin f0365bf44b657ba --verify --id 6ad40c319318588593caae7b24a956175f4d46e7 --mechanism ECDSA --signature-file binary_msg.sig.bin
+
+
+--- --- ---
+
+openssl dgst -sha256 -verify publickey.pem -signature data.txt.signature data.txt
+
+
+

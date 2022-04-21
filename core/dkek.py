@@ -42,6 +42,10 @@ def write_text_file(path: str, text: str):
     with open(path, mode='wt') as file:
         file.write(text)
 
+def write_binary_file(path: str, data: bytes):
+    with open(path, mode='wb') as file:
+        file.write(data)
+
 def blank_dkek():
     return bytes([0x00]*32)
 
@@ -305,7 +309,7 @@ def eckey_to_pem(eckey: ECKey):
     der = header + priv_key + joiner + pub_key
 
     return '\n'.join([
-        '-----BEGIN/END EC PRIVATE KEY-----',
+        '-----BEGIN EC PRIVATE KEY-----',
         base64.b64encode(der).decode('ascii'),
-        '-----BEGIN/END EC PRIVATE KEY-----'
+        '-----END EC PRIVATE KEY-----'
     ])
