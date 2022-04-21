@@ -121,7 +121,6 @@ def decrypt_DKEK_share_blob(
     assert share_prefix == encrypted_dkek_share_header
 
     salt = blob[8:16]
-    print(f'salt {hex(salt)}')
 
     ciphertext = blob[16:]
     
