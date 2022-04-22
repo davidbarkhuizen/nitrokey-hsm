@@ -1,4 +1,4 @@
-from core.dkek import ECKey, KeyBlob, hex
+from core.dkek import ECKey, KeyBlob, hex, readable_hex
 
 def report_on(label:str, target):
     
@@ -40,14 +40,18 @@ def ec_key_export_report(dkek: bytes, blob: KeyBlob, key: ECKey):
         
     long_ec_fields_report = [
         'secret_d', 
-        str(hex(key.secret_d)), 
+        str(hex(key.secret_d)),
+        readable_hex(key.secret_d), 
         'pub_q', 
-        str(hex(key.pub_q))
+        str(hex(key.pub_q)),
+        readable_hex(key.pub_q)
     ]
 
     return [
-        *blob_report, 
+        *blob_report,
+        '', 
         *short_ec_field_report, 
+        '',
         *long_ec_fields_report
     ]
 

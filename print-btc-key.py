@@ -29,6 +29,6 @@ dkek, keyblob, eckey = unwrap_ec_key(encrypted_dkek_share, password, wrapped_ec_
 #pem = eckey_to_pem(eckey)
 report = ec_key_export_report(dkek, keyblob, eckey)
 printer_text = '\n'.join(report)
-
+print(printer_text)
 #lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
 #lpr.stdin.write(printer_text.encode('ascii'))

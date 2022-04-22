@@ -26,7 +26,12 @@ KeyBlob = namedtuple('KeyBlob',
     'dkek_kcv key_type oid encrypted_subblob')
 
 def hex(b):
-    return hexlify(b).upper()
+    return hexlify(b)
+
+def readable_hex(b):
+    hexed = hexlify(b)
+    chunks = [hexed[i:i+4].decode('ascii') for i in range(0, len(hexed), 4)]
+    return '-'.join(chunks).upper()
 
 def timeit(method):
     def timed(*args, **kw):
