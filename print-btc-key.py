@@ -3,7 +3,7 @@ import subprocess
 import argparse
 
 from core.dkek import load_binary_file, unwrap_ec_key, eckey_to_pem
-from core.reports import ec_key_export_report, dkek_report
+from core.reports import ec_key_export_report
 
 parser = argparse.ArgumentParser(description='unwrap EC key exported from NitroKeyHSM')
 
@@ -28,13 +28,12 @@ wrapped_ec_key = load_binary_file(args.key)
 dkek, keyblob, eckey = unwrap_ec_key(encrypted_dkek_share, password, wrapped_ec_key)
 pem = eckey_to_pem(eckey)
 
-dkek_report_text = '\n'.join(dkek_report(dkek))
-ec_report_text = '\n'.join(ec_key_export_report(pem, keyblob, eckey))
+report_text = '\n'.join(ec_key_export_report(dkek, pem, keyblob, eckey))
 
-print()
-print(dkek_report_text)
-print()
-print(ec_report_text)
+def xprint(text: str):
+    #encoded = text.encode('ascii')
+    #lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
+    #lpr.stdin.write(encoded)
+    print(text)
 
-#lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
-#lpr.stdin.write(printer_text.encode('ascii'))
+xprint(report_text)

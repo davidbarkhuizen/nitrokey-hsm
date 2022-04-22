@@ -24,17 +24,11 @@ def report_on(label:str, target):
 #
 # print dek share (hex) & KCV
 
-def dkek_report(dkek):
-    return [
-        'DKEK',
-        readable_hex(dkek)
-    ]
+def ec_key_export_report(dkek, pem, blob: KeyBlob, key: ECKey):
 
-def ec_key_export_report(pem, blob: KeyBlob, key: ECKey):
-    
-    pem_report = [
-        'PEM',
-        pem
+    dkek_report = [
+        'PLAINTEXT DKEK',
+        readable_hex(dkek)
     ]
 
     blob_report = [
@@ -79,12 +73,17 @@ def ec_key_export_report(pem, blob: KeyBlob, key: ECKey):
         readable_hex(key.pub_q)
     ]
 
+    pem_report = [
+        'PEM',
+        pem
+    ]
+
     return [
-        *pem_report,
-        '',
         *blob_report,
         '',
         *short_ec_field_report, 
         '',
-        *long_ec_fields_report
+        *long_ec_fields_report,
+        '',
+        *pem_report
     ]
