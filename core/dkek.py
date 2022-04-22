@@ -6,6 +6,7 @@ from _md5 import md5 as MD5 # faster than hashlib.md5 (by factor of 2)
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import cmac
 from binascii import hexlify, unhexlify
+import textwrap
 
 encrypted_dkek_share_header = 'Salted__'.encode('ascii')
 dkek_share_padding = unhexlify('10101010101010101010101010101010')
@@ -25,13 +26,17 @@ ECKey = namedtuple('ECKey',
 KeyBlob = namedtuple('KeyBlob', 
     'dkek_kcv key_type oid encrypted_subblob')
 
+def chunk(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
 def hex(b):
     return hexlify(b)
 
 def readable_hex(b):
     hexed = hexlify(b)
     chunks = [hexed[i:i+4].decode('ascii') for i in range(0, len(hexed), 4)]
-    return '-'.join(chunks).upper()
+    return '\n'.join(['-'.join(line_chunks).upper() for line_chunks in chunk(chunks, 8)])
 
 def timeit(method):
     def timed(*args, **kw):
@@ -289,6 +294,6 @@ def eckey_to_pem(eckey: ECKey):
 
     return '\n'.join([
         '-----BEGIN EC PRIVATE KEY-----',
-        base64.b64encode(der).decode('ascii'),
+        *textwrap.wrap(base64.b64encode(der).decode('ascii'), 64),
         '-----END EC PRIVATE KEY-----'
     ])
