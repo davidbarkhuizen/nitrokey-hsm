@@ -1,6 +1,5 @@
-from binascii import hexlify, unhexlify
+from binascii import unhexlify
 import unittest
-from core.dkek import write_binary_file
 
 from core.ec import ec_sign_ecdsa_sha1, ec_verify_ecdsa_sha1
 
@@ -19,10 +18,5 @@ class TestKeyWrapping(unittest.TestCase):
         ec_verify_ecdsa_sha1(pem, msg, signature)
         self.assertEqual(True, True)
 
-    # def test_ec_verify_ecdsa_sha1(self):
-    #     ec_verify_ecdsa_sha1(pem, msg, sig)
-
 if __name__ == '__main__':
     unittest.main()
-
-# write_binary_file('./msg.bin', msg)

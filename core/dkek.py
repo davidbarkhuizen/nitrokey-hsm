@@ -23,21 +23,10 @@ ECKey = namedtuple('ECKey',
     'random_prefix key_size a b prime_factor order generator_g secret_d pub_q')
 
 KeyBlob = namedtuple('KeyBlob', 
-    'dkek_kcv keytype:KeyType oid encrypted_subblob')
+    'dkek_kcv key_type oid encrypted_subblob')
 
 def hex(b):
     return hexlify(b).upper()
-
-def report_on(label:str, target):
-    
-    try: 
-        target_str = hex(target)
-    except:
-        target_str = str(target)
-    
-    l = len(target) if hasattr(target, '__len__') else '?'
-
-    return f'{label: <20} ({l:>3}) {target_str}'
 
 def timeit(method):
     def timed(*args, **kw):
@@ -204,10 +193,10 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 @timeit
-def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
+def decrypt_dkek_wrapped_ec_key(dkek: bytes, der: bytes):
 
     decoder = asn1.Decoder()
-    decoder.start(blob)
+    decoder.start(der)
     tag, value = decoder.read()
     x_decoder = asn1.Decoder()
     x_decoder.start(value)
@@ -245,7 +234,7 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
 
     kek = derive_kek_from_dkek(dkek)
     iv = bytes([0x00]*16)
-    decrypted_subblob = decrypt_aes_cbc(kek, iv, keyblob.encrypted_subblob)
+    decrypted_subblob = decrypt_aes_cbc(kek, iv, encrypted_subblob)
 
     # -------------------------------------------------------
 
@@ -281,8 +270,8 @@ def unwrap_ec_key(encrypted_dkek_share: bytes, password: bytes, wrapped_key: byt
     dkek = dkek_from_shares([dkek_share])        
     calced_kcv = calc_dkek_kcv(dkek)
     print(f'dkek kcv {hexlify(calced_kcv)}')
-    keyblob, ec_key = decrypt_dkek_wrapped_ec_key(dkek, wrapped_key)
-    return dkek, ec_key
+    keyblob, eckey = decrypt_dkek_wrapped_ec_key(dkek, wrapped_key)
+    return dkek, keyblob, eckey
 
 def eckey_to_pem(eckey: ECKey):
     
@@ -298,31 +287,3 @@ def eckey_to_pem(eckey: ECKey):
         base64.b64encode(der).decode('ascii'),
         '-----END EC PRIVATE KEY-----'
     ])
-
-
-def ec_key_export_report(dkek: bytes, blob: KeyBlob, key: ECKey):
-
-    blob_report = [report_on(l,v) for [l,v] in [
-        ('DKEK KCV', blob.dkek_kcv),
-        ('key_type', f'{blob.key_type.name} ({blob.key_type.value})'),
-        ('oid', oid)
-    ]]    
-
-    short_ec_field_report = [report_on(l,v) for [l,v] in [
-        ('key size, bits', key.key_size),
-        ('random_prefix', key.random_prefix),
-        ('a', key.a),    
-        ('b', key.b),    
-        ('prime_factor', key.prime_factor),
-        ('order', key.order),
-        ('generator_g', key.generator_g),        
-    ]]        
-        
-    long_ec_fields_report = [
-        'secret_d', 
-        key.secret_d, 
-        'pub_q', 
-        key.pub_point_q
-    ]
-
-
