@@ -1,4 +1,4 @@
-# nitrokey-hsm
+# nitrokey-hsm-tools
 david barkhuizen, 2022 (david.barkhuizen@gmail.com)    
 
 ## install
@@ -22,8 +22,8 @@ https://pypi.org/project/ecdsa/
 
 ## references
 
-Ludovic Rousseau 
-PyKCS11 1.5.2 documentation 
+Ludovic Rousseau  
+PyKCS11 1.5.2 documentation  
 https://pkcs11wrap.sourceforge.io/api/  
 
 Olaf Kirch <okir@suse.de>  
