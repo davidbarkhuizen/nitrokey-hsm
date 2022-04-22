@@ -31,9 +31,8 @@ pem = eckey_to_pem(eckey)
 report_text = '\n'.join(ec_key_export_report(dkek, pem, keyblob, eckey))
 
 def xprint(text: str):
-    #encoded = text.encode('ascii')
-    #lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
-    #lpr.stdin.write(encoded)
-    print(text)
+    encoded = text.encode('ascii')
+    lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
+    lpr.stdin.write(encoded)
 
 xprint(report_text)
