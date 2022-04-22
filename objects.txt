@@ -1,0 +1,52 @@
+PKCS#15 Card [SmartCard-HSM]:
+	Version        : 0
+	Serial number  : DENK0105702
+	Manufacturer ID: www.CardContact.de
+	Flags          : 
+
+
+PIN [UserPIN]
+	Object Flags   : [0x03], private, modifiable
+	Auth ID        : 02
+	ID             : 01
+	Flags          : [0x812], local, initialized, exchangeRefData
+	Length         : min_len:6, max_len:15, stored_len:0
+	Pad char       : 0x00
+	Reference      : 129 (0x81)
+	Type           : ascii-numeric
+	Path           : e82b0601040181c31f0201::
+	Tries left     : 3
+
+PIN [SOPIN]
+	Object Flags   : [0x01], private
+	ID             : 02
+	Flags          : [0x9A], local, unblock-disabled, initialized, soPin
+	Length         : min_len:16, max_len:16, stored_len:0
+	Pad char       : 0x00
+	Reference      : 136 (0x88)
+	Type           : bcd
+	Path           : e82b0601040181c31f0201::
+	Tries left     : 15
+
+Private EC Key [btc-cold-test]
+	Object Flags   : [0x03], private, modifiable
+	Usage          : [0x10C], sign, signRecover, derive
+	Access Flags   : [0x1D], sensitive, alwaysSensitive, neverExtract, local
+	Algo_refs      : 0
+	FieldLength    : 256
+	Key ref        : 1 (0x01)
+	Native         : yes
+	Auth ID        : 01
+	ID             : 82844e612504b811f4c775b0d57bd7ef98923bbc
+	MD:guid        : a87854ce-8270-a2d1-9d04-b6ba565cd29f
+
+Public EC Key [btc-cold-test]
+	Object Flags   : [0x00]
+	Usage          : [0x40], verify
+	Access Flags   : [0x02], extract
+	FieldLength    : 256
+	Key ref        : 0 (0x00)
+	Native         : no
+	ID             : 82844e612504b811f4c775b0d57bd7ef98923bbc
+	DirectValue    : <present>
+

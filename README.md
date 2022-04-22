@@ -5,6 +5,10 @@ nitrokey-hsm btc node
 
 ### references
 
+Ludovic Rousseau 
+PyKCS11 1.5.2 documentation 
+https://pkcs11wrap.sourceforge.io/api/
+
 Olaf Kirch <okir@suse.de>
 pkcs11-tool - Man Page
 https://www.mankier.com/1/pkcs11-tool

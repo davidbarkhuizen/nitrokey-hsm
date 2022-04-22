@@ -22,13 +22,30 @@ class KeyType(Enum):
 ECKey = namedtuple('ECKey',
     'random_prefix key_size a b prime_factor order generator_g secret_d pub_q')
 
+KeyBlob = namedtuple('KeyBlob', 
+    'dkek_kcv keytype:KeyType oid encrypted_subblob')
+
+def hex(b):
+    return hexlify(b).upper()
+
+def report_on(label:str, target):
+    
+    try: 
+        target_str = hex(target)
+    except:
+        target_str = str(target)
+    
+    l = len(target) if hasattr(target, '__len__') else '?'
+
+    return f'{label: <20} ({l:>3}) {target_str}'
+
 def timeit(method):
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()        
         elapsed_ms = (te - ts) * 1000
-        print(f'{method.__name__}: {elapsed_ms} ms')
+        print(f'{method.__name__}: {elapsed_ms :.0} ms')
         return result
     return timed
 
@@ -57,9 +74,6 @@ def calc_dkek_kcv(dkek):
     kcv_msg = hashlib.sha256()
     kcv_msg.update(dkek)
     return kcv_msg.digest()[:8]
-
-def hex(b):
-    return hexlify(b).upper()
 
 @timeit
 def decrypt_aes_cbc(key, iv, ciphertext):
@@ -192,17 +206,6 @@ def encrypt_dkek_share_blob(share: bytes, password: bytes, salt: bytes = None):
 @timeit
 def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
 
-    def report_on(label:str, target):
-        
-        try: 
-            target_str = hexlify(target)
-        except:
-            target_str = str(target)
-        
-        l = len(target) if hasattr(target, '__len__') else '?'
-
-        print(f'{label: <20} ({l:>3}) {target_str}')
-
     decoder = asn1.Decoder()
     decoder.start(blob)
     tag, value = decoder.read()
@@ -214,51 +217,41 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
 
     def generate_unpacker(source: bytes):
 
-        def get_obj_from_blob(offset: int):
+        def unpack_obj_from_blob(offset: int):
             [l] = struct.unpack('>H', source[offset:offset+2])
             obj = source[offset+2:offset+2+l]
             return (obj, l, offset+2+l)
 
-        return get_obj_from_blob
-
+        return unpack_obj_from_blob
 
     dkek_kcv = blob[:8]
-    report_on('DKEK KCV', dkek_kcv)
 
     raw_key_type = blob[8]   
-    key_type = KeyType(raw_key_type)
-    report_on('key_type', f'{key_type.name} ({raw_key_type})')
+    keytype = KeyType(raw_key_type)
     
     get_blob_obj_at = generate_unpacker(blob)
 
     offset = 9
     [oid, obj_len,offset] = get_blob_obj_at(offset)
-    report_on('oid', oid)
-
     # id-TA-ECDSA-SHA-256 0.4.0.127.0.7.2.2.2.2.3
 
-    # 0000 allowed algos
-    # 0000 access conditions
-    # 0000 key OID
-
     [allowed_algos, size, offset] = get_blob_obj_at(offset)
-    report_on('allowed_algos', allowed_algos)
-
     [access_conditions, size, offset] = get_blob_obj_at(offset)
-    report_on('access_conditions', access_conditions)
-
     [key_oid, size, offset] = get_blob_obj_at(offset)
-    report_on('key_oid', key_oid)
 
-    encrypted_blob = blob[offset:-16] # TODO check what is in the last 16 bytes !!!
+    encrypted_subblob = blob[offset:-16] # TODO check what is in the last 16 bytes !!!
+
+    keyblob = KeyBlob(dkek_kcv, keytype, oid, encrypted_subblob)
 
     kek = derive_kek_from_dkek(dkek)
     iv = bytes([0x00]*16)
-    decrypted_blob = decrypt_aes_cbc(kek, iv, encrypted_blob)
+    decrypted_subblob = decrypt_aes_cbc(kek, iv, keyblob.encrypted_subblob)
 
-    random_prefix = decrypted_blob[:8]
-    get_key_obj_at = generate_unpacker(decrypted_blob)
-    [key_size] = struct.unpack('>H', decrypted_blob[8:10])
+    # -------------------------------------------------------
+
+    random_prepadding = decrypted_subblob[:8]
+    get_key_obj_at = generate_unpacker(decrypted_subblob)
+    [key_size] = struct.unpack('>H', decrypted_subblob[8:10])
 
     offset = 10
 
@@ -270,18 +263,8 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
     [secret_d, size, offset] = get_key_obj_at(offset)
     [pub_point_q, size, offset] = get_key_obj_at(offset)
 
-    report_on('key size, bits', key_size)
-    report_on('random_prefix', random_prefix)
-    report_on('a', a)    
-    report_on('b', b)    
-    report_on('prime_factor', prime_factor)    
-    report_on('order', order)
-    report_on('generator_g', generator_g)
-    report_on('secret_d', secret_d)
-    report_on('pub_point_q', pub_point_q)
-
-    return ECKey(
-        random_prefix, 
+    eckey = ECKey(
+        random_prepadding, 
         key_size, 
         a, 
         b, 
@@ -291,12 +274,15 @@ def decrypt_dkek_wrapped_ec_key(dkek: bytes, blob: bytes):
         secret_d, 
         pub_point_q)
 
+    return (keyblob, eckey)
+
 def unwrap_ec_key(encrypted_dkek_share: bytes, password: bytes, wrapped_key: bytes):
     dkek_share = decrypt_DKEK_share_blob(encrypted_dkek_share, password)
     dkek = dkek_from_shares([dkek_share])        
     calced_kcv = calc_dkek_kcv(dkek)
     print(f'dkek kcv {hexlify(calced_kcv)}')
-    return decrypt_dkek_wrapped_ec_key(dkek, wrapped_key)
+    keyblob, ec_key = decrypt_dkek_wrapped_ec_key(dkek, wrapped_key)
+    return dkek, ec_key
 
 def eckey_to_pem(eckey: ECKey):
     
@@ -312,3 +298,31 @@ def eckey_to_pem(eckey: ECKey):
         base64.b64encode(der).decode('ascii'),
         '-----END EC PRIVATE KEY-----'
     ])
+
+
+def ec_key_export_report(dkek: bytes, blob: KeyBlob, key: ECKey):
+
+    blob_report = [report_on(l,v) for [l,v] in [
+        ('DKEK KCV', blob.dkek_kcv),
+        ('key_type', f'{blob.key_type.name} ({blob.key_type.value})'),
+        ('oid', oid)
+    ]]    
+
+    short_ec_field_report = [report_on(l,v) for [l,v] in [
+        ('key size, bits', key.key_size),
+        ('random_prefix', key.random_prefix),
+        ('a', key.a),    
+        ('b', key.b),    
+        ('prime_factor', key.prime_factor),
+        ('order', key.order),
+        ('generator_g', key.generator_g),        
+    ]]        
+        
+    long_ec_fields_report = [
+        'secret_d', 
+        key.secret_d, 
+        'pub_q', 
+        key.pub_point_q
+    ]
+
+

@@ -9,7 +9,7 @@ wrapped_btc_key = unhexlify('3082039a0482016b97e303855dc1c54d0c000a04007f0007020
 class TestKeyWrapping(unittest.TestCase):
     
     def test_encryption_of_wrapped_btc_key(self):
-        decrypt_dkek_wrapped_ec_key(dkek, wrapped_btc_key)
+        keyblob, eckey = decrypt_dkek_wrapped_ec_key(dkek, wrapped_btc_key)
         self.assertEqual(True, True)
 
 if __name__ == '__main__':
