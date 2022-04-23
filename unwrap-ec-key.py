@@ -32,3 +32,4 @@ wrapped_ec_key = load_binary_file(args.key)
 eckey = unwrap_ec_key(encrypted_dkek_share, password, wrapped_ec_key)
 pem = eckey_to_pem(eckey)
 write_text_file(args.pem, pem)
+
