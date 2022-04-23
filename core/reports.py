@@ -1,4 +1,7 @@
+from binascii import hexlify
 from core.dkek import ECKey, KeyBlob, hex, readable_hex
+
+import base58
 
 def format(target):
 
@@ -70,7 +73,10 @@ def ec_key_export_report(dkek, pem, blob: KeyBlob, key: ECKey):
         readable_hex(key.secret_d), 
         '',
         f'pub_q ({len(key.pub_q)})', 
-        readable_hex(key.pub_q)
+        readable_hex(key.pub_q),
+        ''
+        'pub_q (b58)',
+        base58.b58encode_check(key.pub_q).decode('ascii')
     ]
 
     pem_report = [

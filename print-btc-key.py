@@ -62,10 +62,16 @@ print('hard signature successfully verified using exported soft key!')
 report_text = '\n'.join(ec_key_export_report(dkek, pem, keyblob, eckey))
 
 def xprint(text: str):
-    encoded = text.encode('ascii')
-    print('using default printer')
-    lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
-    lpr.stdin.write(encoded)
+
+    for l in text.split('\n'):
+        print(l)
+
+    # DEBUG
+    #
+    # encoded = text.encode('ascii')
+    # print('using default printer')
+    # lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
+    # lpr.stdin.write(encoded)
 
 print('printing plaintext key export')
 xprint(report_text)

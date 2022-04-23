@@ -59,3 +59,7 @@ https://python-pkcs11.readthedocs.io/en/latest/api.html
 
 asn1 pip library  
 https://python-asn1.readthedocs.io/en/latest/  
+
+Technical background of version 1 Bitcoin addresses
+bitcoin.it
+https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
