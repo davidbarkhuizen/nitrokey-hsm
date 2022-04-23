@@ -54,7 +54,8 @@ https://helpmanual.io/help/pkcs11-tool/
 
 python-pkcs11  
 Using with SmartCard-HSM (Nitrokey HSM)  
-https://python-pkcs11.readthedocs.io/en/latest/opensc.html  
+https://python-pkcs11.readthedocs.io
+https://python-pkcs11.readthedocs.io/en/latest/api.html
 
 asn1 pip library  
 https://python-asn1.readthedocs.io/en/latest/  
