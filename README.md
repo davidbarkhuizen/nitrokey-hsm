@@ -1,6 +1,17 @@
 # nitrokey-hsm-tools
 david barkhuizen, 2022 (david.barkhuizen@gmail.com)    
 
+## test credentials
+
+credential|value
+----------|-----
+token-label|nitro-test
+so-pin|c20257d49033ac93 
+user-pin|f0365bf44b657ba 
+share|dkek-test
+
+    $ ./install-btc-key.sh nitro-test c20257d49033ac93 f0365bf44b657ba dkek-test passwordpassword btc-test
+
 ## install
 
 ### ubuntu
@@ -38,7 +49,6 @@ Ján Jančá
 Standardised Elliptic Curves  
 https://neuromancer.sk/std/  
 
-helpmanual.io  
 pkcs11-tool  
 https://helpmanual.io/help/pkcs11-tool/  
 
