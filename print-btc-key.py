@@ -2,7 +2,7 @@ import subprocess
 
 import argparse
 
-from core.dkek import load_binary_file, unwrap_ec_key, eckey_to_pem
+from core.dkek import read_binary_file, unwrap_ec_key, eckey_to_pem, write_text_file
 from core.hsm import configure_pkcs11_lib, sign_with_ec_key
 from core.reports import ec_key_export_report
 
@@ -38,9 +38,9 @@ parser.add_argument('hsm_key_label',
 
 args = parser.parse_args()
 
-encrypted_dkek_share = load_binary_file(args.dkek)
+encrypted_dkek_share = read_binary_file(args.dkek)
 password = args.password.encode('ascii')
-wrapped_ec_key = load_binary_file(args.key)
+wrapped_ec_key = read_binary_file(args.key)
 key_label = args.hsm_key_label
 hsm_serial = args.hsm # 'DENK0105702'
 user_pin = args.hsm_user_pin # 'f0365bf44b657ba'
@@ -59,19 +59,16 @@ soft_signing_key = SigningKey.from_pem(pem)
 soft_signing_key.verifying_key.verify(hard_sig, data)
 print('hard signature successfully verified using exported soft key!')
 
-report_text = '\n'.join(ec_key_export_report(dkek, pem, keyblob, eckey))
+report = ec_key_export_report(dkek, pem, keyblob, eckey)
+report_text = '\n'.join(report)
+
+def write_report_to_file(text):
+    write_text_file(f'{key_label}.log', text)
 
 def xprint(text: str):
+    print('printing plaintext key export using default printer')
+    encoded = text.encode('ascii')    
+    lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
+    lpr.stdin.write(encoded)
 
-    for l in text.split('\n'):
-        print(l)
-
-    # DEBUG
-    #
-    # encoded = text.encode('ascii')
-    # print('using default printer')
-    # lpr = subprocess.Popen("/usr/bin/lpr", stdin=subprocess.PIPE)
-    # lpr.stdin.write(encoded)
-
-print('printing plaintext key export')
-xprint(report_text)
+write_report_to_file(report_text)

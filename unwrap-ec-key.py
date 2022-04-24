@@ -3,7 +3,7 @@ from binascii import hexlify
 
 from yaml import load
 
-from core.dkek import load_binary_file, unwrap_ec_key, eckey_to_pem, write_text_file
+from core.dkek import read_binary_file, unwrap_ec_key, eckey_to_pem, write_text_file
 
 parser = argparse.ArgumentParser(description='unwrap EC key exported from NitroKeyHSM')
 
@@ -25,9 +25,9 @@ parser.add_argument('pem',
 
 args = parser.parse_args()
 
-encrypted_dkek_share = load_binary_file(args.dkek)
+encrypted_dkek_share = read_binary_file(args.dkek)
 password = args.password.encode('ascii')
-wrapped_ec_key = load_binary_file(args.key)
+wrapped_ec_key = read_binary_file(args.key)
 
 eckey = unwrap_ec_key(encrypted_dkek_share, password, wrapped_ec_key)
 pem = eckey_to_pem(eckey)

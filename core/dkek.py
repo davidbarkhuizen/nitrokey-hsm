@@ -48,7 +48,7 @@ def timeit(method):
         return result
     return timed
 
-def load_binary_file(path: str):
+def read_binary_file(path: str):
     binary_data = None
     with open(path, mode='rb') as file:
         binary_data = file.read()
