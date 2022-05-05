@@ -1,7 +1,4 @@
 import argparse
-from binascii import hexlify
-
-from yaml import load
 
 from core.dkek import read_binary_file, unwrap_ec_key, eckey_to_pem, write_text_file
 
@@ -32,4 +29,3 @@ wrapped_ec_key = read_binary_file(args.key)
 eckey = unwrap_ec_key(encrypted_dkek_share, password, wrapped_ec_key)
 pem = eckey_to_pem(eckey)
 write_text_file(args.pem, pem)
-

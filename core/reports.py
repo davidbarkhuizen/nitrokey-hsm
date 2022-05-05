@@ -1,9 +1,10 @@
 from binascii import hexlify
+from typing import Any
 from core.dkek import ECKey, KeyBlob, hex, readable_hex
 
 import base58
 
-def format(target):
+def format(target: Any):
 
     try: 
         target_str = str(hex(target))
@@ -27,7 +28,7 @@ def report_on(label:str, target):
 #
 # print dek share (hex) & KCV
 
-def ec_key_export_report(dkek, pem, blob: KeyBlob, key: ECKey):
+def ec_key_export_report(dkek: bytes, pem: bytes, blob: KeyBlob, key: ECKey):
 
     dkek_report = [
         'PLAINTEXT DKEK',

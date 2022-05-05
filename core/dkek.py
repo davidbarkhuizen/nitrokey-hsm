@@ -1,4 +1,5 @@
 import struct, asn1, time, logging, hashlib, base64
+from typing import Callable
 from os import urandom
 from enum import Enum
 from collections import namedtuple
@@ -26,19 +27,19 @@ ECKey = namedtuple('ECKey',
 KeyBlob = namedtuple('KeyBlob', 
     'dkek_kcv key_type oid encrypted_subblob')
 
-def chunk(lst, n):
+def chunk(lst: list, n: int):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def hex(b):
+def hex(b: bytes):
     return hexlify(b)
 
-def readable_hex(b):
+def readable_hex(b: bytes):
     hexed = hexlify(b)
     chunks = [hexed[i:i+4].decode('ascii') for i in range(0, len(hexed), 4)]
     return '\n'.join(['-'.join(line_chunks).upper() for line_chunks in chunk(chunks, 8)])
 
-def timeit(method):
+def timeit(method: Callable):
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)
@@ -65,17 +66,17 @@ def write_binary_file(path: str, data: bytes):
 def blank_dkek():
     return bytes([0x00]*32)
 
-def mix_key_share_into_dkek(dkek, share):    
+def mix_key_share_into_dkek(dkek: bytes, share: bytes):    
     return bytes(a ^ b for a, b in zip(dkek, share))
 
 @timeit
-def calc_dkek_kcv(dkek):
+def calc_dkek_kcv(dkek: bytes):
     kcv_msg = hashlib.sha256()
     kcv_msg.update(dkek)
     return kcv_msg.digest()[:8]
 
 @timeit
-def decrypt_aes_cbc(key, iv, ciphertext):
+def decrypt_aes_cbc(key: bytes, iv: bytes, ciphertext: bytes):
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     decryptor = cipher.decryptor()
     plain_text = decryptor.update(ciphertext)
@@ -83,7 +84,7 @@ def decrypt_aes_cbc(key, iv, ciphertext):
     return plain_text
 
 @timeit
-def encrypt_aes_cbc(key, iv, plain_text):
+def encrypt_aes_cbc(key: bytes, iv: bytes, plain_text: bytes):
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv))
     encryptor = cipher.encryptor()
     cipher_text = encryptor.update(plain_text)
@@ -91,7 +92,7 @@ def encrypt_aes_cbc(key, iv, plain_text):
     return cipher_text
 
 @timeit
-def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations=10000000):
+def derive_DKEK_share_encryption_key(salt: bytes, password: bytes, hash_iterations: int = 10000000):
     '''return 32 byte derived key concatenated with 16 byte IV'''
     
     print('deriving DKEK share encryption password')
@@ -148,13 +149,13 @@ def decrypt_DKEK_share_blob(
     return share
 
 @timeit
-def derive_kek_from_dkek(dkek):
+def derive_kek_from_dkek(dkek: bytes):
     m = hashlib.sha256()
     m.update(dkek + kek_padding)
     return m.digest()
 
 @timeit
-def derive_mak_from_dkek(dkek):
+def derive_mak_from_dkek(dkek: bytes):
     m = hashlib.sha256()
     m.update(dkek + mak_padding)
     return m.digest()
