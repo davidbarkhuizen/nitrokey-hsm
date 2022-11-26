@@ -3,3 +3,4 @@ ecdsa
 python-pkcs11
 base58
 pycryptodome
+cryptography

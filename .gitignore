@@ -1,5 +1,8 @@
-*.pbe
+# virtual environments
+.py2
+.py3
 
+*.pbe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
