@@ -10,7 +10,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 #sock.connect(("64.237.43.178", 8333))
 sock.connect(("24.255.210.44", 8333))
 
-sock.send(msg_utils.getVersionMsg())
+sock.send(msg_utils.get_version_msg())
 
 want = 0
 buf = ''

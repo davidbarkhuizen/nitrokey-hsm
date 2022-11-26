@@ -51,7 +51,7 @@ def getSignableTxn(parsed):
 
 # Verifies that a transaction is properly signed, assuming the generated scriptPubKey matches
 # the one in the previous transaction's output
-def verifyTxnSignature(txn):                    
+def verify_transaction_signature(txn):                    
     parsed = parseTxn(txn)      
     signableTxn = getSignableTxn(parsed)
     hashToSign = hashlib.sha256(hashlib.sha256(signableTxn.decode('hex')).digest()).digest().encode('hex')
@@ -61,7 +61,7 @@ def verifyTxnSignature(txn):
     vk = ecdsa.VerifyingKey.from_string(public_key[2:].decode('hex'), curve=ecdsa.SECP256k1)
     assert(vk.verify_digest(sig.decode('hex'), hashToSign.decode('hex')))
 
-def makeSignedTransaction(privateKey, outputTransactionHash, sourceIndex, scriptPubKey, outputs):
+def make_signed_transaction(privateKey, outputTransactionHash, sourceIndex, scriptPubKey, outputs):
     myTxn_forSig = (makeRawTransaction(outputTransactionHash, sourceIndex, scriptPubKey, outputs)
          + "01000000") # hash code
 
@@ -71,7 +71,7 @@ def makeSignedTransaction(privateKey, outputTransactionHash, sourceIndex, script
     pubKey = key_utils.privateKeyToPublicKey(privateKey)
     scriptSig = utils.varstr(sig).encode('hex') + utils.varstr(pubKey.decode('hex')).encode('hex')
     signed_txn = makeRawTransaction(outputTransactionHash, sourceIndex, scriptSig, outputs)
-    verifyTxnSignature(signed_txn)
+    verify_transaction_signature(signed_txn)
     return signed_txn
     
 class TestTxnUtils(unittest.TestCase):
@@ -120,7 +120,7 @@ class TestTxnUtils(unittest.TestCase):
                         "ffffffff02015f0000000000001976a914c8e90996c7c6080ee06284600c684ed904d14c5c88ac204e000000000000" +
                         "1976a914348514b329fda7bd33c7b2336cf7cd1fc9544c0588ac00000000")
 
-        verifyTxnSignature(txn)
+        verify_transaction_signature(txn)
 
     def test_makeRawTransaction(self):
         #http://bitcoin.stackexchange.com/questions/3374/how-to-redeem-a-basic-tx
@@ -141,18 +141,18 @@ class TestTxnUtils(unittest.TestCase):
         # Transaction from
         # https://blockchain.info/tx/901a53e7a3ca96ed0b733c0233aad15f11b0c9e436294aa30c367bf06c3b7be8
         # From 133t to 1KKKK
-        privateKey = key_utils.wifToPrivateKey("5Kb6aGpijtrb8X28GzmWtbcGZCG8jHQWFJcWugqo3MwKRvC8zyu") #133t
+        privateKey = key_utils.wif_to_private_key("5Kb6aGpijtrb8X28GzmWtbcGZCG8jHQWFJcWugqo3MwKRvC8zyu") #133t
 
-        signed_txn = makeSignedTransaction(privateKey,
+        signed_txn = make_signed_transaction(privateKey,
             "c39e394d41e6be2ea58c2d3a78b8c644db34aeff865215c633fe6937933078a9", # output (prev) transaction hash
             0, # sourceIndex
-            key_utils.addrHashToScriptPubKey("133txdxQmwECTmXqAr9RWNHnzQ175jGb7e"),
+            key_utils.address_hash_to_script_pub_key("133txdxQmwECTmXqAr9RWNHnzQ175jGb7e"),
             [[24321, #satoshis
-            key_utils.addrHashToScriptPubKey("1KKKK6N21XKo48zWKuQKXdvSsCf95ibHFa")],
-             [20000,            key_utils.addrHashToScriptPubKey("15nhZbXnLMknZACbb3Jrf1wPCD9DWAcqd7")]]
+            key_utils.address_hash_to_script_pub_key("1KKKK6N21XKo48zWKuQKXdvSsCf95ibHFa")],
+             [20000,            key_utils.address_hash_to_script_pub_key("15nhZbXnLMknZACbb3Jrf1wPCD9DWAcqd7")]]
             )
 
-        verifyTxnSignature(signed_txn)
+        verify_transaction_signature(signed_txn)
 
 if __name__ == '__main__':
     unittest.main()

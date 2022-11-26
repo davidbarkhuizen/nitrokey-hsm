@@ -1,5 +1,3 @@
-import random
-
 import key_utils
 import txn_utils
 import msg_utils
@@ -25,27 +23,28 @@ dest_address = '1KKKK6N21XKo48zWKuQKXdvSsCf95ibHFa'
 btc_node_host = '97.88.151.164'
 btc_node_port = 8333
 
-wif = key_utils.privateKeyToWif(private_key_hex)
-source_address = key_utils.keyToAddr(private_key_hex)
+wif = key_utils.private_key_to_wif(private_key_hex)
+
+source_address = key_utils.key_to_addr(private_key_hex)
 
 print(private_key_hex, wif, source_address)
 
-privateKey = key_utils.wifToPrivateKey(wif)
+privateKey = key_utils.wif_to_private_key(wif)
 
-signed_txn = txn_utils.makeSignedTransaction(privateKey,
+signed_txn = txn_utils.make_signed_transaction(privateKey,
     prev_txn_output_hash,
     source_index,
-    key_utils.addrHashToScriptPubKey(source_address),
-    [[amount_in_satoshis, key_utils.addrHashToScriptPubKey(dest_address)]]
+    key_utils.address_hash_to_script_pub_key(source_address),
+    [[amount_in_satoshis, key_utils.address_hash_to_script_pub_key(dest_address)]]
 )
     
-txn_utils.verifyTxnSignature(signed_txn)
+txn_utils.verify_transaction_signature(signed_txn)
 print('SIGNED TXN', signed_txn)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((btc_node_host, btc_node_port))
 
-sock.send(msg_utils.getVersionMsg())
+sock.send(msg_utils.get_version_msg())
 sock.recv(1000) # receive version
 sock.recv(1000) # receive verack
-sock.send(msg_utils.getTxMsg(signed_txn.decode('hex')))
+sock.send(msg_utils.get_tx_msg(signed_txn.decode('hex')))

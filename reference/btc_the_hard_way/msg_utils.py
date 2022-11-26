@@ -64,7 +64,7 @@ def dump(s):
     print ':'.join(x.encode('hex') for x in s)
 
 
-def getVersionMsg():
+def get_version_msg():
     # version(4), services(8), timestamp(8), addr_me(26), addr_you(26), nonce(8)
     # sub_version_num (var_str), start_height(4)
     version = 60002
@@ -99,7 +99,7 @@ def getInvMsg():
     payload_inv = utils.varint(1) + struct.pack('<L', 2) + inv_hash.decode('hex')[::-1]
     return makeMessage(magic, 'inv', payload_inv)
 
-def getTxMsg(payload):
+def get_tx_msg(payload):
     return makeMessage(magic, 'tx', payload)
 
 def getAddrMsg():

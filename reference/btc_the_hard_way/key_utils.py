@@ -11,10 +11,10 @@ import struct
 import utils
 
 # https://en.bitcoin.it/wiki/Wallet_import_format
-def privateKeyToWif(key_hex):    
+def private_key_to_wif(key_hex):    
     return utils.base58CheckEncode(0x80, key_hex.decode('hex'))
 
-def wifToPrivateKey(s):
+def wif_to_private_key(s):
     b = utils.base58CheckDecode(s)
     return b.encode('hex')
 
@@ -36,7 +36,7 @@ def privateKeyToPublicKey(s):
     return ('\04' + sk.verifying_key.to_string()).encode('hex')
 
 # Input is hex string
-def keyToAddr(s):
+def key_to_addr(s):
     return pubKeyToAddr(privateKeyToPublicKey(s))
 
 def pubKeyToAddr(s):
@@ -44,7 +44,7 @@ def pubKeyToAddr(s):
     ripemd160.update(hashlib.sha256(s.decode('hex')).digest())
     return utils.base58CheckEncode(0, ripemd160.digest())
 
-def addrHashToScriptPubKey(b58str):
+def address_hash_to_script_pub_key(b58str):
     assert(len(b58str) == 34)
     # 76     A9      14 (20 bytes)                                 88             AC
     return '76a914' + utils.base58CheckDecode(b58str).encode('hex') + '88ac'
@@ -53,15 +53,15 @@ def addrHashToScriptPubKey(b58str):
 class TestKey(unittest.TestCase):
 
     def test_privateKeyToWif(self):
-        w = privateKeyToWif("0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D")
+        w = private_key_to_wif("0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D")
         self.assertEqual(w, "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ")
 
     def test_WifToPrivateKey(self):
-        k = wifToPrivateKey("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ")
+        k = wif_to_private_key("5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ")
         self.assertEqual(k.upper(), "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D")
 
     def test_keyToAddr(self):
-        a = keyToAddr("18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725")
+        a = key_to_addr("18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725")
         self.assertEqual(a, "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM")
 
     def test_pairs1(self):
@@ -69,29 +69,29 @@ class TestKey(unittest.TestCase):
         wallet_addr = "1EyBEhrriJeghX4iqATQEWDq38Ae8ubBJe"
         wallet_private = "8tnArBrrp4KHVjv8WA6HiX4ev56WDhqGA16XJCHJzhNH"
         wallet_key = utils.base256encode(utils.base58decode(wallet_private)).encode('hex')
-        self.assertEqual(keyToAddr(wallet_key), wallet_addr)
+        self.assertEqual(key_to_addr(wallet_key), wallet_addr)
 
         # can import into multibit
         bitcoin_qt = "5Jhw8B9J9QLaMmcBRfz7x8KkD9gwbNoyBMfWyANqiDwm3FFwgGC"
         wallet_key = utils.base58CheckDecode(bitcoin_qt).encode('hex')
-        self.assertEqual(keyToAddr(wallet_key), wallet_addr)
+        self.assertEqual(key_to_addr(wallet_key), wallet_addr)
 
         wallet_key = "754580de93eea21579441b58e0c9b09f54f6005fc71135f5cfac027394b22caa"
-        self.assertEqual(keyToAddr(wallet_key), wallet_addr)
+        self.assertEqual(key_to_addr(wallet_key), wallet_addr)
 
     def test_pairs2(self):
         #http://gobittest.appspot.com/Address
         # Cannot import into multibit
         wallet_private = "BB08A897EA1E422F989D36DE8D8186D8406BE25E577FD2A66976BF172325CDC9"
         wallet_addr = "1MZ1nxFpvUgaPYYWaLPkLGAtKjRqcCwbGh"
-        self.assertEqual(keyToAddr(wallet_private), wallet_addr)
+        self.assertEqual(key_to_addr(wallet_private), wallet_addr)
 
     def test_pairs3(self):
         # Can import into multibit
         # http://bitaddress.org
         wallet_private = "5J8PhneLEaL9qEPvW5voRgrELeXcmM12B6FbiA9wZAwDMnJMb2L"
         wallet_addr = "1Q2SuNLDXDtda7DPnBTocQWtUg1v4xZMrV"
-        self.assertEqual(keyToAddr(utils.base58CheckDecode(wallet_private).encode('hex')), wallet_addr)
+        self.assertEqual(key_to_addr(utils.base58CheckDecode(wallet_private).encode('hex')), wallet_addr)
         
     def test_der(self):
         self.assertEqual(ecdsa.der.encode_sequence(
